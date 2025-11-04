@@ -7,13 +7,14 @@ import { CheckCircle2, ArrowRight, Sparkles, Target, DollarSign, Calendar, Heart
 import { motion } from 'framer-motion';
 import HeroSection from '../components/landing/HeroSection';
 import FeaturesShowcase from '../components/landing/FeaturesShowcase';
-import DayInLifeSection from '../components/landing/DayInLifeSection'; // Added import
+import DayInLifeSection from '../components/landing/DayInLifeSection';
 import ComparisonSection from '../components/landing/ComparisonSection';
 import TestimonialsSection from '../components/landing/TestimonialsSection';
 import DemoSection from '../components/landing/DemoSection';
 import PricingSection from '../components/landing/PricingSection';
 import Footer from '../components/landing/Footer';
-import FloatingCTA from '../components/landing/FloatingCTA'; // Added import
+import FloatingCTA from '../components/landing/FloatingCTA';
+import Logo from '../components/landing/Logo'; // Added import
 
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
@@ -48,20 +49,8 @@ export default function Landing() {
           }}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-10 h-10 rounded-[14px] flex items-center justify-center"
-                style={{
-                  background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
-                  boxShadow: `
-                    0 4px 16px rgba(139, 92, 246, 0.3),
-                    inset 0 2px 4px rgba(255, 255, 255, 0.3),
-                    inset 0 -2px 4px rgba(0, 0, 0, 0.1)
-                  `
-                }}
-              >
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+            <div className="flex items-center gap-3"> {/* Changed gap-2 to gap-3 */}
+              <Logo className="w-10 h-10" /> {/* Replaced existing logo div with Logo component */}
               <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 SoloSync
               </span>
@@ -95,7 +84,7 @@ export default function Landing() {
       {/* Features Showcase */}
       <FeaturesShowcase />
 
-      {/* Day in Life Section */} {/* Added component */}
+      {/* Day in Life Section */}
       <DayInLifeSection />
 
       {/* Comparison Section */}
@@ -113,7 +102,7 @@ export default function Landing() {
       {/* Footer */}
       <Footer />
 
-      {/* Floating CTA */} {/* Added component */}
+      {/* Floating CTA */}
       <FloatingCTA />
     </div>
   );
