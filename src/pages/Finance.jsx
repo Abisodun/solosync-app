@@ -1,30 +1,22 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
+import { Plus, FileText } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, DollarSign, TrendingUp, TrendingDown, FileText, AlertCircle, Edit2, Trash2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { handleError } from '@/utils/errorHandler';
 import AIForecast from '../components/finance/AIForecast';
+import TransactionForm from '../components/finance/TransactionForm';
+import TransactionList from '../components/finance/TransactionList';
+import FinanceStats from '../components/finance/FinanceStats';
 
 export default function Finance() {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
-  const [transactionData, setTransactionData] = useState({
-    type: 'income',
-    amount: '',
-    description: '',
-    category: '',
-    date: new Date().toISOString().split('T')[0],
-    client_name: ''
-  });
   const [user, setUser] = useState(null);
 
   const queryClient = useQueryClient();
@@ -35,62 +27,81 @@ export default function Finance() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error("Failed to load user:", error);
-        // Handle error, e.g., redirect to login or show a message
+        handleError(error, 'Loading user');
       }
     };
     loadUser();
   }, []);
 
-  const { data: transactions = [] } = useQuery({
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
     queryKey: ['transactions'],
-    queryFn: () => base44.entities.Transaction.list('-date', 200)
+    queryFn: async () => {
+      try {
+        return await base44.entities.Transaction.list('-date', 200);
+      } catch (error) {
+        handleError(error, 'Loading transactions');
+        return [];
+      }
+    }
   });
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['invoices'],
-    queryFn: () => base44.entities.Invoice.list('-issue_date', 100)
+    queryFn: async () => {
+      try {
+        return await base44.entities.Invoice.list('-issue_date', 100);
+      } catch (error) {
+        handleError(error, 'Loading invoices');
+        return [];
+      }
+    }
   });
 
   const createTransactionMutation = useMutation({
-    mutationFn: (data) => base44.entities.Transaction.create({ ...data, amount: Number(data.amount) }),
+    mutationFn: (data) => base44.entities.Transaction.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       resetTransactionForm();
+    },
+    onError: (error) => {
+      handleError(error, 'Creating transaction');
     }
   });
 
   const updateTransactionMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Transaction.update(id, { ...data, amount: Number(data.amount) }),
+    mutationFn: ({ id, data }) => base44.entities.Transaction.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       resetTransactionForm();
+    },
+    onError: (error) => {
+      handleError(error, 'Updating transaction');
     }
   });
 
   const deleteTransactionMutation = useMutation({
     mutationFn: (id) => base44.entities.Transaction.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+    onError: (error) => {
+      handleError(error, 'Deleting transaction');
+    }
   });
 
   const resetTransactionForm = () => {
-    setTransactionData({ type: 'income', amount: '', description: '', category: '', date: new Date().toISOString().split('T')[0], client_name: '' });
     setEditingTransaction(null);
     setShowTransactionForm(false);
   };
 
-  const handleTransactionSubmit = (e) => {
-    e.preventDefault();
+  const handleTransactionSubmit = async (data) => {
     if (editingTransaction) {
-      updateTransactionMutation.mutate({ id: editingTransaction.id, data: transactionData });
+      await updateTransactionMutation.mutateAsync({ id: editingTransaction.id, data });
     } else {
-      createTransactionMutation.mutate(transactionData);
+      await createTransactionMutation.mutateAsync(data);
     }
   };
 
   const handleEditTransaction = (transaction) => {
     setEditingTransaction(transaction);
-    setTransactionData({ ...transaction, date: transaction.date.split('T')[0] });
     setShowTransactionForm(true);
   };
 
@@ -120,6 +131,14 @@ export default function Finance() {
 
   const COLORS = ['#A78BFA', '#93C5FD', '#86EFAC', '#FCD34D', '#F472B6', '#34D399'];
 
+  if (transactionsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Header */}
@@ -129,11 +148,21 @@ export default function Finance() {
           <p className="text-gray-600 mt-1">Manage income, expenses & invoices</p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={() => setShowTransactionForm(!showTransactionForm)} className="rounded-[14px] text-white" style={{ background: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' }}>
+          <Button
+            onClick={() => setShowTransactionForm(!showTransactionForm)}
+            className="rounded-[14px] text-white"
+            style={{ background: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' }}
+            aria-label="Add new transaction"
+          >
             <Plus className="w-5 h-5 mr-2" />
             Transaction
           </Button>
-          <Button onClick={() => setShowInvoiceForm(!showInvoiceForm)} className="rounded-[14px] text-white" style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}>
+          <Button
+            onClick={() => setShowInvoiceForm(!showInvoiceForm)}
+            className="rounded-[14px] text-white"
+            style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}
+            aria-label="Create new invoice"
+          >
             <FileText className="w-5 h-5 mr-2" />
             Invoice
           </Button>
@@ -141,85 +170,24 @@ export default function Finance() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(134, 239, 172, 0.15)' }}>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' }}>
-              <TrendingUp className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-800">${totalIncome.toLocaleString()}</div>
-              <div className="text-sm text-gray-600">Total Income</div>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(252, 165, 165, 0.15)' }}>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FCA5A5 0%, #EF4444 100%)' }}>
-              <TrendingDown className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-800">${totalExpenses.toLocaleString()}</div>
-              <div className="text-sm text-gray-600">Total Expenses</div>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: netProfit >= 0 ? 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' : 'linear-gradient(135deg, #FCA5A5 0%, #EF4444 100%)' }}>
-              <DollarSign className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>${Math.abs(netProfit).toLocaleString()}</div>
-              <div className="text-sm text-gray-600">Net {netProfit >= 0 ? 'Profit' : 'Loss'}</div>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(252, 211, 77, 0.15)' }}>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)' }}>
-              <AlertCircle className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-800">${unpaidAmount.toLocaleString()}</div>
-              <div className="text-sm text-gray-600">Unpaid Invoices</div>
-            </div>
-          </div>
-        </Card>
+      <div className="mb-8">
+        <FinanceStats
+          totalIncome={totalIncome}
+          totalExpenses={totalExpenses}
+          netProfit={netProfit}
+          unpaidAmount={unpaidAmount}
+          currency={user?.currency}
+        />
       </div>
 
       {/* Transaction Form */}
       <AnimatePresence>
         {showTransactionForm && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-8">
-            <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-              <h3 className="text-xl font-bold text-gray-800 mb-4">{editingTransaction ? 'Edit Transaction' : 'New Transaction'}</h3>
-              <form onSubmit={handleTransactionSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Select value={transactionData.type} onValueChange={(value) => setTransactionData({ ...transactionData, type: value })}>
-                    <SelectTrigger className="rounded-[12px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="income">Income</SelectItem>
-                      <SelectItem value="expense">Expense</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input type="number" step="0.01" placeholder="Amount" value={transactionData.amount} onChange={(e) => setTransactionData({ ...transactionData, amount: e.target.value })} required className="rounded-[12px]" />
-                </div>
-                <Input placeholder="Description" value={transactionData.description} onChange={(e) => setTransactionData({ ...transactionData, description: e.target.value })} required className="rounded-[12px]" />
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Input placeholder="Category" value={transactionData.category} onChange={(e) => setTransactionData({ ...transactionData, category: e.target.value })} required className="rounded-[12px]" />
-                  <Input type="date" value={transactionData.date} onChange={(e) => setTransactionData({ ...transactionData, date: e.target.value })} required className="rounded-[12px]" />
-                  <Input placeholder="Client/Vendor (optional)" value={transactionData.client_name} onChange={(e) => setTransactionData({ ...transactionData, client_name: e.target.value })} className="rounded-[12px]" />
-                </div>
-                <div className="flex gap-3 justify-end">
-                  <Button type="button" variant="outline" onClick={resetTransactionForm} className="rounded-[12px]">Cancel</Button>
-                  <Button type="submit" className="rounded-[12px] text-white" style={{ background: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' }}>
-                    {editingTransaction ? 'Update' : 'Add'} Transaction
-                  </Button>
-                </div>
-              </form>
-            </Card>
-          </motion.div>
+          <TransactionForm
+            transaction={editingTransaction}
+            onSubmit={handleTransactionSubmit}
+            onCancel={resetTransactionForm}
+          />
         )}
       </AnimatePresence>
 
@@ -249,7 +217,16 @@ export default function Finance() {
           <h3 className="text-lg font-bold text-gray-800 mb-4">Spending by Category</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} outerRadius={100} fill="#8884d8" dataKey="value">
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
                 {pieData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
@@ -261,39 +238,11 @@ export default function Finance() {
       </div>
 
       {/* Recent Transactions */}
-      <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Recent Transactions</h3>
-        <div className="space-y-3">
-          {transactions.slice(0, 10).map((transaction) => (
-            <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-[14px]">
-              <div className="flex items-center gap-4 flex-1">
-                <div className={`w-10 h-10 rounded-[12px] flex items-center justify-center ${transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
-                  {transaction.type === 'income' ? (
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <TrendingDown className="w-5 h-5 text-red-600" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-800">{transaction.description}</div>
-                  <div className="text-sm text-gray-500">{transaction.category} • {format(new Date(transaction.date), 'MMM d, yyyy')}</div>
-                </div>
-                <div className={`text-lg font-bold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                  {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => handleEditTransaction(transaction)} className="p-2 hover:bg-gray-200 rounded-[10px]">
-                    <Edit2 className="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button onClick={() => deleteTransactionMutation.mutate(transaction.id)} className="p-2 hover:bg-gray-200 rounded-[10px]">
-                    <Trash2 className="w-4 h-4 text-red-600" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+      <TransactionList
+        transactions={transactions}
+        onEdit={handleEditTransaction}
+        onDelete={(id) => deleteTransactionMutation.mutate(id)}
+      />
     </div>
   );
 }

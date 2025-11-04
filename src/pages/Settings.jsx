@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -5,9 +6,36 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings as SettingsIcon, User, CreditCard, Globe, Sparkles, Check, Crown, Zap } from 'lucide-react';
+import { Settings as SettingsIcon, User, CreditCard, Globe, Sparkles, Check, Crown, Zap, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
+
+// Helper function to sanitize input
+const sanitizeInput = (value) => {
+  if (typeof value !== 'string') return '';
+  // Basic sanitization: trim whitespace. Additional sanitization for XSS prevention might be required
+  // if these inputs are rendered directly in HTML in other parts of the application.
+  return value.trim();
+};
+
+// Helper function to validate and truncate input
+const validateInput = (value, maxLength) => {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  return trimmed.length > maxLength ? trimmed.substring(0, maxLength) : trimmed;
+};
+
+// Helper function to handle errors
+const handleError = (error, context = 'Operation') => {
+  console.error(`${context} failed:`, error);
+  let message = 'An unexpected error occurred. Please try again.';
+  if (error.response && error.response.data && error.response.data.message) {
+    message = error.response.data.message;
+  } else if (error.message) {
+    message = error.message;
+  }
+  return { message, error };
+};
 
 export default function Settings() {
   const [user, setUser] = useState(null);
@@ -17,6 +45,8 @@ export default function Settings() {
     state_province: '',
     currency: 'USD'
   });
+  const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState('');
 
   const queryClient = useQueryClient();
 
@@ -25,42 +55,96 @@ export default function Settings() {
   }, []);
 
   const loadUser = async () => {
-    const currentUser = await base44.auth.me();
-    setUser(currentUser);
-    setProfileData({
-      full_name: currentUser.full_name || '',
-      country: currentUser.country || '',
-      state_province: currentUser.state_province || '',
-      currency: currentUser.currency || 'USD'
-    });
+    try {
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+      setProfileData({
+        full_name: validateInput(currentUser.full_name || '', 100),
+        country: validateInput(currentUser.country || '', 100),
+        state_province: validateInput(currentUser.state_province || '', 100),
+        currency: currentUser.currency || 'USD'
+      });
+    } catch (error) {
+      handleError(error, 'Loading user settings');
+    }
   };
 
   const updateProfileMutation = useMutation({
     mutationFn: (data) => base44.auth.updateMe(data),
     onSuccess: () => {
       loadUser();
-      alert('Profile updated successfully!');
+      setSuccessMessage('Profile updated successfully!');
+      setErrors({}); // Clear any previous errors
+      setTimeout(() => setSuccessMessage(''), 3000); // Clear success message after 3 seconds
+    },
+    onError: (error) => {
+      const errorInfo = handleError(error, 'Updating profile');
+      setErrors({ submit: errorInfo.message });
+      setSuccessMessage(''); // Ensure success message is cleared on error
     }
   });
 
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!profileData.full_name || profileData.full_name.trim().length < 2) {
+      newErrors.full_name = 'Name must be at least 2 characters.';
+    } else if (profileData.full_name.trim().length > 100) {
+      newErrors.full_name = 'Name cannot exceed 100 characters.';
+    }
+    
+    if (profileData.country && profileData.country.trim().length < 2) {
+      newErrors.country = 'Please enter a valid country name.';
+    } else if (profileData.country.trim().length > 100) {
+      newErrors.country = 'Country name cannot exceed 100 characters.';
+    }
+
+    if (profileData.state_province && profileData.state_province.trim().length > 100) {
+      newErrors.state_province = 'State/Province name cannot exceed 100 characters.';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleProfileUpdate = (e) => {
     e.preventDefault();
-    updateProfileMutation.mutate(profileData);
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    const sanitizedData = {
+      full_name: sanitizeInput(profileData.full_name),
+      country: sanitizeInput(profileData.country),
+      state_province: sanitizeInput(profileData.state_province),
+      currency: profileData.currency
+    };
+    
+    updateProfileMutation.mutate(sanitizedData);
   };
 
   const startTrial = async () => {
-    const trialEndDate = new Date();
-    trialEndDate.setDate(trialEndDate.getDate() + 14);
-    
-    await base44.auth.updateMe({
-      subscription_tier: 'pro',
-      subscription_status: 'trial',
-      trial_start_date: new Date().toISOString(),
-      trial_end_date: trialEndDate.toISOString()
-    });
-    
-    loadUser();
-    alert('🎉 Your 14-day Pro trial has started! Enjoy all premium features.');
+    try {
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 14);
+      
+      await base44.auth.updateMe({
+        subscription_tier: 'pro',
+        subscription_status: 'trial',
+        trial_start_date: new Date().toISOString(),
+        trial_end_date: trialEndDate.toISOString()
+      });
+      
+      loadUser();
+      setSuccessMessage('🎉 Your 14-day Pro trial has started! Enjoy all premium features.');
+      setTimeout(() => setSuccessMessage(''), 5000); // Clear message after 5 seconds
+      setErrors({}); // Clear any previous errors
+    } catch (error) {
+      const errorInfo = handleError(error, 'Starting trial');
+      setErrors({ trial: errorInfo.message });
+      setSuccessMessage(''); // Ensure success message is cleared on error
+    }
   };
 
   if (!user) {
@@ -150,6 +234,14 @@ export default function Settings() {
                   </div>
                 )}
               </div>
+              {errors.trial && ( // Display trial specific error
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-[12px]">
+                  <p className="text-sm text-red-800 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.trial}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Available Plans */}
@@ -246,49 +338,114 @@ export default function Settings() {
               <h2 className="text-2xl font-bold text-gray-800">Profile Settings</h2>
             </div>
 
+            {successMessage && (
+              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-[12px]">
+                <p className="text-sm text-green-800 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {successMessage}
+                </p>
+              </div>
+            )}
+
+            {errors.submit && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-[12px]">
+                <p className="text-sm text-red-800 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.submit}
+                </p>
+              </div>
+            )}
+
             <form onSubmit={handleProfileUpdate} className="space-y-4">
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">Full Name</label>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="full-name">
+                  Full Name *
+                </label>
                 <Input
+                  id="full-name"
                   value={profileData.full_name}
-                  onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
-                  className="rounded-[12px]"
+                  onChange={(e) => setProfileData({ ...profileData, full_name: validateInput(e.target.value, 100) })}
+                  className={`rounded-[12px] ${errors.full_name ? 'border-red-500' : ''}`}
                   placeholder="Your full name"
+                  maxLength={100}
+                  aria-invalid={!!errors.full_name}
+                  aria-describedby={errors.full_name ? 'name-error' : undefined}
+                  required
                 />
+                {errors.full_name && (
+                  <p id="name-error" className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.full_name}
+                  </p>
+                )}
               </div>
+              
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">Email</label>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="email">
+                  Email
+                </label>
                 <Input
-                  value={user.email}
+                  id="email"
+                  value={user?.email || ''}
                   disabled
                   className="rounded-[12px] bg-gray-50"
+                  aria-describedby="email-note"
                 />
-                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                <p id="email-note" className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
               </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">Country</label>
+                  <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="country">
+                    Country
+                  </label>
                   <Input
+                    id="country"
                     value={profileData.country}
-                    onChange={(e) => setProfileData({ ...profileData, country: e.target.value })}
-                    className="rounded-[12px]"
+                    onChange={(e) => setProfileData({ ...profileData, country: validateInput(e.target.value, 100) })}
+                    className={`rounded-[12px] ${errors.country ? 'border-red-500' : ''}`}
                     placeholder="e.g., United States"
+                    maxLength={100}
+                    aria-invalid={!!errors.country}
                   />
+                  {errors.country && (
+                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.country}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">State/Province</label>
+                  <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="state">
+                    State/Province
+                  </label>
                   <Input
+                    id="state"
                     value={profileData.state_province}
-                    onChange={(e) => setProfileData({ ...profileData, state_province: e.target.value })}
-                    className="rounded-[12px]"
+                    onChange={(e) => setProfileData({ ...profileData, state_province: validateInput(e.target.value, 100) })}
+                    className={`rounded-[12px] ${errors.state_province ? 'border-red-500' : ''}`}
                     placeholder="e.g., California"
+                    maxLength={100}
+                    aria-invalid={!!errors.state_province}
                   />
+                  {errors.state_province && (
+                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.state_province}
+                    </p>
+                  )}
                 </div>
               </div>
+              
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">Currency</label>
-                <Select value={profileData.currency} onValueChange={(value) => setProfileData({ ...profileData, currency: value })}>
-                  <SelectTrigger className="rounded-[12px]">
+                <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="currency">
+                  Currency
+                </label>
+                <Select
+                  value={profileData.currency}
+                  onValueChange={(value) => setProfileData({ ...profileData, currency: value })}
+                >
+                  <SelectTrigger id="currency" className="rounded-[12px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -300,12 +457,14 @@ export default function Settings() {
                   </SelectContent>
                 </Select>
               </div>
+              
               <Button
                 type="submit"
                 className="w-full rounded-[12px] text-white"
                 style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}
+                disabled={updateProfileMutation.isPending}
               >
-                Save Changes
+                {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </form>
           </Card>
