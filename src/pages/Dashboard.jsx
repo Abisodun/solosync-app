@@ -10,6 +10,8 @@ import { createPageUrl } from '@/utils';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
+  const [aiTip, setAiTip] = useState('');
+  const [loadingTip, setLoadingTip] = useState(false);
 
   useEffect(() => {
     loadUser();
@@ -49,6 +51,55 @@ export default function Dashboard() {
     enabled: !!user
   });
 
+  const { data: habits = [] } = useQuery({
+    queryKey: ['habits'],
+    queryFn: () => base44.entities.Habit.list('-created_date', 50),
+    enabled: !!user
+  });
+
+  const { data: contentItems = [] } = useQuery({
+    queryKey: ['content'],
+    queryFn: () => base44.entities.ContentItem.list('-scheduled_date', 50),
+    enabled: !!user
+  });
+
+  useEffect(() => {
+    if (user && tasks.length > 0) { // Only generate tip if user and tasks data is available
+      generateAITip();
+    }
+  }, [user, tasks]);
+
+  const generateAITip = async () => {
+    setLoadingTip(true);
+    try {
+      const urgentTasks = tasks.filter(t => t.priority === 'high' && t.status !== 'done').length;
+      const completedToday = tasks.filter(t => 
+        t.status === 'done' && 
+        new Date(t.updated_date).toDateString() === new Date().toDateString()
+      ).length;
+
+      const prompt = `You are a productivity coach. Based on this data:
+- User role: ${user.role}
+- Urgent tasks: ${urgentTasks}
+- Tasks completed today: ${completedToday}
+- Total active tasks: ${tasks.filter(t => t.status !== 'done').length}
+- Active goals: ${goals.filter(g => g.status === 'active').length}
+
+Provide ONE concise, actionable productivity tip (max 2 sentences) tailored to their situation.`;
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: prompt,
+        add_context_from_internet: false
+      });
+
+      setAiTip(result || "Focus on your high-priority tasks first to maximize productivity.");
+    } catch (error) {
+      console.error('Error generating tip:', error);
+      setAiTip("Break large tasks into smaller steps for better progress tracking.");
+    }
+    setLoadingTip(false);
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -64,9 +115,11 @@ export default function Dashboard() {
   };
 
   const completedTasks = tasks.filter(t => t.status === 'done').length;
+  const urgentTasks = tasks.filter(t => t.priority === 'high' && t.status !== 'done').length;
   const activeGoals = goals.filter(g => g.status === 'active').length;
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-  const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const upcomingContent = contentItems.filter(c => c.status === 'scheduled').length;
+  const activeHabits = habits.filter(h => h.is_active).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF]">
@@ -87,9 +140,6 @@ export default function Dashboard() {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 SoloSync
               </h1>
-              <p className="text-sm text-gray-600">
-                {roleInfo[user.role]?.emoji} {roleInfo[user.role]?.title}
-              </p>
             </div>
           </div>
           <Button
@@ -114,9 +164,41 @@ export default function Dashboard() {
             Welcome back, {user.full_name || 'there'}! 👋
           </h2>
           <p className="text-lg text-gray-600">
-            Here's what's happening with your workspace today
+            {roleInfo[user.role]?.emoji} {roleInfo[user.role]?.title} • Here's your workspace overview
           </p>
         </motion.div>
+
+        {/* AI-Powered Tip */}
+        {(aiTip || loadingTip) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <Card
+              className="p-6 rounded-[20px]"
+              style={{
+                background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%)',
+                boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)'
+              }}
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)'
+                  }}
+                >
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">💡 AI Productivity Tip</h3>
+                  <p className="text-gray-700">{loadingTip ? 'Generating personalized tip...' : aiTip}</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -141,9 +223,13 @@ export default function Dashboard() {
                 >
                   <CheckCircle2 className="w-6 h-6 text-white" />
                 </div>
-                <TrendingUp className="w-5 h-5 text-green-600" />
+                {urgentTasks > 0 && (
+                  <div className="px-2 py-1 rounded-[8px] bg-red-100 text-red-700 text-xs font-bold">
+                    {urgentTasks} urgent
+                  </div>
+                )}
               </div>
-              <div className="text-3xl font-bold text-gray-800 mb-1">{completedTasks}</div>
+              <div className="text-3xl font-bold text-gray-800 mb-1">{completedTasks}/{tasks.length}</div>
               <div className="text-sm text-gray-600">Tasks Completed</div>
             </Card>
           </motion.div>
@@ -196,6 +282,7 @@ export default function Dashboard() {
                 >
                   <DollarSign className="w-6 h-6 text-white" />
                 </div>
+                <TrendingUp className="w-5 h-5 text-green-600" />
               </div>
               <div className="text-3xl font-bold text-gray-800 mb-1">${totalIncome.toLocaleString()}</div>
               <div className="text-sm text-gray-600">Total Income</div>
@@ -224,8 +311,8 @@ export default function Dashboard() {
                   <Calendar className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <div className="text-3xl font-bold text-gray-800 mb-1">{tasks.length}</div>
-              <div className="text-sm text-gray-600">Total Tasks</div>
+              <div className="text-3xl font-bold text-gray-800 mb-1">{upcomingContent}</div>
+              <div className="text-sm text-gray-600">Upcoming Content</div>
             </Card>
           </motion.div>
         </div>
@@ -278,14 +365,14 @@ export default function Dashboard() {
                 ))}
                 {tasks.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
-                    No tasks yet. Create your first task to get started!
+                    No tasks yet. Create your first task!
                   </div>
                 )}
               </div>
             </Card>
           </motion.div>
 
-          {/* Goals & Quick Stats */}
+          {/* Goals & Habits */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -329,16 +416,29 @@ export default function Dashboard() {
             <Card
               className="p-6 rounded-[20px]"
               style={{
-                background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%)',
+                background: 'rgba(255, 255, 255, 0.95)',
                 boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)'
               }}
             >
-              <h3 className="text-lg font-bold text-gray-800 mb-4">💡 Tip of the Day</h3>
-              <p className="text-sm text-gray-700">
-                {user.role === 'freelancer' && "Track your time on projects to better estimate future work and optimize your rates."}
-                {user.role === 'creator' && "Plan your content calendar a week ahead to reduce stress and maintain consistency."}
-                {user.role === 'small_business' && "Review your finances weekly to stay on top of cash flow and identify growth opportunities."}
-              </p>
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Active Habits</h3>
+              <div className="space-y-3">
+                {habits.filter(h => h.is_active).slice(0, 3).map((habit) => (
+                  <div key={habit.id} className="flex items-center justify-between p-3 rounded-[12px] bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-[10px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FCA5A5 0%, #EF4444 100%)' }}>
+                        <span className="text-white text-lg">🔥</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-800 text-sm">{habit.name}</div>
+                        <div className="text-xs text-gray-500">{habit.current_streak} day streak</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {habits.filter(h => h.is_active).length === 0 && (
+                  <div className="text-center py-4 text-gray-500 text-sm">Start tracking habits!</div>
+                )}
+              </div>
             </Card>
           </motion.div>
         </div>

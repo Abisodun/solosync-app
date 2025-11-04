@@ -1,6 +1,7 @@
 import Landing from './pages/Landing';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
+import Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -12,4 +13,5 @@ export const PAGES = {
 export const pagesConfig = {
     mainPage: "Landing",
     Pages: PAGES,
+    Layout: Layout,
 };
