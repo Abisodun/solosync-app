@@ -5,10 +5,232 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Zap, Play, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
+import { differenceInDays, parseISO, isBefore } from 'date-fns';
 import WorkflowTemplates from '../components/workflows/WorkflowTemplates';
 import WorkflowForm from '../components/workflows/WorkflowForm';
 import WorkflowList from '../components/workflows/WorkflowList';
-import { runWorkflowEngine } from '../utils/workflowEngine';
+
+// Workflow Engine Logic
+const replacePlaceholders = (template, data) => {
+  if (!template) return '';
+  
+  return template
+    .replace(/\{invoice_number\}/g, data.invoice_number || '')
+    .replace(/\{client_name\}/g, data.client_name || '')
+    .replace(/\{amount\}/g, data.amount ? `${data.amount.toFixed(2)}` : '')
+    .replace(/\{due_date\}/g, data.due_date || '')
+    .replace(/\{client\}/g, data.name || '');
+};
+
+const executeActions = async (workflow, entity, entityType) => {
+  const actionsPerformed = [];
+  
+  for (const action of workflow.actions) {
+    try {
+      if (action.type === 'send_email') {
+        const subject = replacePlaceholders(action.config.subject, entity);
+        const body = replacePlaceholders(action.config.body, entity);
+        
+        if (entity.client_email) {
+          await base44.integrations.Core.SendEmail({
+            to: entity.client_email,
+            subject: subject,
+            body: body
+          });
+          
+          actionsPerformed.push({
+            type: 'send_email',
+            success: true,
+            to: entity.client_email,
+            subject: subject
+          });
+        }
+      } else if (action.type === 'update_status') {
+        if (entityType === 'invoice') {
+          await base44.entities.Invoice.update(entity.id, {
+            status: action.config.status
+          });
+          
+          actionsPerformed.push({
+            type: 'update_status',
+            success: true,
+            new_status: action.config.status
+          });
+        }
+      } else if (action.type === 'create_notification') {
+        const message = replacePlaceholders(action.config.message, entity);
+        
+        console.log('Notification:', message);
+        
+        actionsPerformed.push({
+          type: 'create_notification',
+          success: true,
+          message: message
+        });
+      }
+    } catch (error) {
+      console.error(`Error executing action ${action.type}:`, error);
+      actionsPerformed.push({
+        type: action.type,
+        success: false,
+        error: error.message
+      });
+    }
+  }
+  
+  return actionsPerformed;
+};
+
+const logExecution = async (workflow, entity, entityType, actionsPerformed, status, error = null) => {
+  try {
+    await base44.entities.WorkflowExecution.create({
+      workflow_id: workflow.id,
+      workflow_name: workflow.name,
+      trigger_type: workflow.trigger_type,
+      entity_id: entity.id,
+      entity_type: entityType,
+      actions_performed: actionsPerformed,
+      status: status,
+      error_message: error,
+      execution_date: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Error logging workflow execution:', err);
+  }
+};
+
+const wasAlreadyExecuted = async (workflowId, entityId, withinHours = 24) => {
+  try {
+    const executions = await base44.entities.WorkflowExecution.list('-execution_date', 100);
+    const cutoffDate = new Date();
+    cutoffDate.setHours(cutoffDate.getHours() - withinHours);
+    
+    return executions.some(exec => 
+      exec.workflow_id === workflowId && 
+      exec.entity_id === entityId &&
+      exec.status === 'success' &&
+      new Date(exec.execution_date) > cutoffDate
+    );
+  } catch (error) {
+    console.error('Error checking execution history:', error);
+    return false;
+  }
+};
+
+const processInvoiceWorkflows = async (invoices, workflows) => {
+  const today = new Date();
+  
+  for (const invoice of invoices) {
+    if (!invoice.due_date) continue;
+    
+    const dueDate = parseISO(invoice.due_date);
+    const daysUntilDue = differenceInDays(dueDate, today);
+    const isPastDue = isBefore(dueDate, today);
+    const daysPastDue = isPastDue ? Math.abs(daysUntilDue) : 0;
+    
+    for (const workflow of workflows) {
+      if (!workflow.is_active) continue;
+      
+      const alreadyExecuted = await wasAlreadyExecuted(workflow.id, invoice.id, 24);
+      if (alreadyExecuted) continue;
+      
+      let shouldTrigger = false;
+      
+      if (workflow.trigger_type === 'invoice_overdue' && invoice.status !== 'paid') {
+        const daysAfter = workflow.trigger_config.days_after || 0;
+        shouldTrigger = isPastDue && daysPastDue >= daysAfter;
+      }
+      
+      if (workflow.trigger_type === 'invoice_due_soon' && invoice.status === 'sent') {
+        const daysBefore = workflow.trigger_config.days_before || 3;
+        shouldTrigger = !isPastDue && daysUntilDue <= daysBefore && daysUntilDue >= 0;
+      }
+      
+      if (workflow.trigger_type === 'invoice_created') {
+        const minAmount = workflow.trigger_config.min_amount || 0;
+        const createdDate = parseISO(invoice.created_date);
+        const hoursOld = differenceInDays(today, createdDate) * 24;
+        
+        shouldTrigger = invoice.amount >= minAmount && hoursOld < 1;
+      }
+      
+      if (workflow.trigger_type === 'payment_received' && invoice.status === 'paid') {
+        const updatedDate = parseISO(invoice.updated_date);
+        const hoursOld = differenceInDays(today, updatedDate) * 24;
+        
+        shouldTrigger = hoursOld < 1;
+      }
+      
+      if (shouldTrigger) {
+        try {
+          const actionsPerformed = await executeActions(workflow, invoice, 'invoice');
+          await logExecution(workflow, invoice, 'invoice', actionsPerformed, 'success');
+          
+          await base44.entities.Workflow.update(workflow.id, {
+            last_run: new Date().toISOString(),
+            run_count: (workflow.run_count || 0) + 1
+          });
+        } catch (error) {
+          console.error(`Error executing workflow ${workflow.name}:`, error);
+          await logExecution(workflow, invoice, 'invoice', [], 'failed', error.message);
+        }
+      }
+    }
+  }
+};
+
+const processClientWorkflows = async (clients, workflows) => {
+  for (const client of clients) {
+    for (const workflow of workflows) {
+      if (!workflow.is_active) continue;
+      
+      const alreadyExecuted = await wasAlreadyExecuted(workflow.id, client.id, 24);
+      if (alreadyExecuted) continue;
+      
+      let shouldTrigger = false;
+      
+      if (workflow.trigger_type === 'client_status_change') {
+        const toStatus = workflow.trigger_config.to;
+        shouldTrigger = client.status === toStatus;
+      }
+      
+      if (shouldTrigger) {
+        try {
+          const actionsPerformed = await executeActions(workflow, client, 'client');
+          await logExecution(workflow, client, 'client', actionsPerformed, 'success');
+          
+          await base44.entities.Workflow.update(workflow.id, {
+            last_run: new Date().toISOString(),
+            run_count: (workflow.run_count || 0) + 1
+          });
+        } catch (error) {
+          console.error(`Error executing workflow ${workflow.name}:`, error);
+          await logExecution(workflow, client, 'client', [], 'failed', error.message);
+        }
+      }
+    }
+  }
+};
+
+const runWorkflowEngine = async () => {
+  try {
+    const [workflows, invoices, clients] = await Promise.all([
+      base44.entities.Workflow.list('-created_date', 100),
+      base44.entities.Invoice.list('-issue_date', 200),
+      base44.entities.Client.list('name', 200)
+    ]);
+    
+    const activeWorkflows = workflows.filter(w => w.is_active);
+    
+    await processInvoiceWorkflows(invoices, activeWorkflows);
+    await processClientWorkflows(clients, activeWorkflows);
+    
+    return { success: true, processed: activeWorkflows.length };
+  } catch (error) {
+    console.error('Error running workflow engine:', error);
+    return { success: false, error: error.message };
+  }
+};
 
 export default function Workflows() {
   const [showForm, setShowForm] = useState(false);
@@ -136,7 +358,6 @@ export default function Workflows() {
     }
   };
 
-  // Auto-run workflows every 5 minutes
   useEffect(() => {
     const interval = setInterval(async () => {
       if (workflows.some(w => w.is_active)) {
@@ -145,7 +366,7 @@ export default function Workflows() {
         queryClient.invalidateQueries({ queryKey: ['workflows'] });
         queryClient.invalidateQueries({ queryKey: ['workflow-executions'] });
       }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, [workflows, queryClient]);
