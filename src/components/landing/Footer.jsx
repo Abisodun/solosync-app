@@ -69,19 +69,8 @@ export default function Footer() {
               `
             }}
           >
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <div
-                className="w-10 h-10 rounded-[14px] flex items-center justify-center"
-                style={{
-                  background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
-                  boxShadow: `
-                    0 4px 16px rgba(139, 92, 246, 0.3),
-                    inset 0 2px 4px rgba(255, 255, 255, 0.3)
-                  `
-                }}
-              >
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Logo className="w-10 h-10" />
               <h3 className="text-2xl font-bold text-gray-800">Stay Updated</h3>
             </div>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
