@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, ArrowRight, Sparkles, Target, DollarSign, Calendar, Heart, LayoutGrid, TrendingUp, Users, Star, Play, Check, Zap, Clock, FileText, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { createPageUrl } from '@/utils'; // Moved from local definition to import
 import HeroSection from '../components/landing/HeroSection';
 import FeaturesShowcase from '../components/landing/FeaturesShowcase';
 import DayInLifeSection from '../components/landing/DayInLifeSection';
@@ -14,19 +15,7 @@ import DemoSection from '../components/landing/DemoSection';
 import PricingSection from '../components/landing/PricingSection';
 import Footer from '../components/landing/Footer';
 import FloatingCTA from '../components/landing/FloatingCTA';
-import Logo from '../components/landing/Logo'; // Added import
-
-// Helper function to create page URLs.
-// This is a simple placeholder. In a real application, this might use a router's `generatePath` or be part of a custom routing utility.
-const createPageUrl = (pageName) => {
-  switch (pageName) {
-    case 'Onboarding':
-      return '/onboarding'; // Example: navigate to '/onboarding' path
-    // Add more cases as needed for other page names
-    default:
-      return `/${pageName.toLowerCase()}`;
-  }
-};
+import Logo from '../components/landing/Logo';
 
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);

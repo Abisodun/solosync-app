@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, Sparkles, Briefcase, Palette, Store, Upload, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { createPageUrl } from './utils';
+import { createPageUrl } from '@/utils';
 
 const roles = [
   {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -5,7 +6,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, Target, DollarSign, TrendingUp, Calendar, Sparkles, LogOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { createPageUrl } from './utils';
+import { createPageUrl } from '@/utils';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
