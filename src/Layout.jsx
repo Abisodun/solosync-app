@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -12,7 +13,8 @@ import {
   Sparkles,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Calculator
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
@@ -22,7 +24,8 @@ const navigation = [
   { name: 'Goals', icon: Target, page: 'Goals' },
   { name: 'Finance', icon: DollarSign, page: 'Finance' },
   { name: 'Content', icon: Calendar, page: 'Content' },
-  { name: 'Habits', icon: Heart, page: 'Habits' }
+  { name: 'Habits', icon: Heart, page: 'Habits' },
+  { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep' }
 ];
 
 export default function Layout({ children, currentPageName }) {

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CheckCircle2, Target, DollarSign, Calendar, Heart, LayoutGrid, TrendingUp, Clock } from 'lucide-react';
+import { CheckCircle2, Target, DollarSign, Calendar, Heart, LayoutGrid, TrendingUp, Clock, Calculator } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 
@@ -60,6 +60,14 @@ const features = [
     example: 'Example: Generate branded invoices and track which clients still need to pay',
     gradient: 'linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)',
     bgGradient: 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%)'
+  },
+  {
+    icon: Calculator,
+    title: 'Tax Prep Tools',
+    description: 'Organize finances, get AI deduction tips, and export reports for tax season prep.',
+    example: 'Example: Generate annual income/expense summaries with deduction recommendations',
+    gradient: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)',
+    bgGradient: 'linear-gradient(135deg, rgba(252, 211, 77, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%)'
   },
   {
     icon: LayoutGrid,

@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
 import Goals from './pages/Goals';
 import Finance from './pages/Finance';
+import TaxPrep from './pages/TaxPrep';
 import Layout from './Layout.jsx';
 
 
@@ -14,6 +15,7 @@ export const PAGES = {
     "Tasks": Tasks,
     "Goals": Goals,
     "Finance": Finance,
+    "TaxPrep": TaxPrep,
 }
 
 export const pagesConfig = {

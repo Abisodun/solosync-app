@@ -38,7 +38,8 @@ const plans = [
       'Advanced analytics',
       'Custom widgets',
       'Priority support',
-      'Integrations'
+      'Integrations',
+      'Tax Prep Tools'
     ],
     cta: 'Start Free Trial',
     popular: true
@@ -58,7 +59,8 @@ const plans = [
       'API access',
       'Dedicated support',
       'Training & onboarding',
-      'SLA guarantee'
+      'SLA guarantee',
+      'Tax Prep Tools'
     ],
     cta: 'Contact Sales',
     popular: false
