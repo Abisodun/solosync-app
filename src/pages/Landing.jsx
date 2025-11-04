@@ -16,6 +16,18 @@ import Footer from '../components/landing/Footer';
 import FloatingCTA from '../components/landing/FloatingCTA';
 import Logo from '../components/landing/Logo'; // Added import
 
+// Helper function to create page URLs.
+// This is a simple placeholder. In a real application, this might use a router's `generatePath` or be part of a custom routing utility.
+const createPageUrl = (pageName) => {
+  switch (pageName) {
+    case 'Onboarding':
+      return '/onboarding'; // Example: navigate to '/onboarding' path
+    // Add more cases as needed for other page names
+    default:
+      return `/${pageName.toLowerCase()}`;
+  }
+};
+
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
 
@@ -26,6 +38,10 @@ export default function Landing() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleCTAClick = () => {
+    window.location.href = createPageUrl('Onboarding');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF]">
@@ -62,6 +78,7 @@ export default function Landing() {
               <a href="#pricing" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">Pricing</a>
             </div>
             <Button
+              onClick={handleCTAClick}
               className="rounded-[14px] px-6 text-white font-medium"
               style={{
                 background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
