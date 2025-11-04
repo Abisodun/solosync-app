@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
-import { Plus, FileText } from 'lucide-react';
+import { Plus, FileText, TrendingUp } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card } from "@/components/ui/card";
@@ -11,11 +11,18 @@ import AIForecast from '../components/finance/AIForecast';
 import TransactionForm from '../components/finance/TransactionForm';
 import TransactionList from '../components/finance/TransactionList';
 import FinanceStats from '../components/finance/FinanceStats';
+import InvoiceForm from '../components/finance/InvoiceForm';
+import InvoiceList from '../components/finance/InvoiceList';
+import InvoiceView from '../components/finance/InvoiceView';
+import InvoiceStats from '../components/finance/InvoiceStats';
 
 export default function Finance() {
+  const [activeTab, setActiveTab] = useState('overview');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [editingInvoice, setEditingInvoice] = useState(null);
+  const [viewingInvoice, setViewingInvoice] = useState(null);
   const [user, setUser] = useState(null);
 
   const queryClient = useQueryClient();
@@ -44,7 +51,7 @@ export default function Finance() {
     }
   });
 
-  const { data: invoices = [] } = useQuery({
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
       try {
@@ -89,9 +96,48 @@ export default function Finance() {
     }
   });
 
+  const createInvoiceMutation = useMutation({
+    mutationFn: (data) => base44.entities.Invoice.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      resetInvoiceForm();
+    },
+    onError: (error) => {
+      console.error('Error creating invoice:', error);
+      alert('Failed to create invoice. Please try again.');
+    }
+  });
+
+  const updateInvoiceMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Invoice.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      resetInvoiceForm();
+      setViewingInvoice(null);
+    },
+    onError: (error) => {
+      console.error('Error updating invoice:', error);
+      alert('Failed to update invoice. Please try again.');
+    }
+  });
+
+  const deleteInvoiceMutation = useMutation({
+    mutationFn: (id) => base44.entities.Invoice.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+    onError: (error) => {
+      console.error('Error deleting invoice:', error);
+      alert('Failed to delete invoice. Please try again.');
+    }
+  });
+
   const resetTransactionForm = () => {
     setEditingTransaction(null);
     setShowTransactionForm(false);
+  };
+
+  const resetInvoiceForm = () => {
+    setEditingInvoice(null);
+    setShowInvoiceForm(false);
   };
 
   const handleTransactionSubmit = async (data) => {
@@ -102,9 +148,35 @@ export default function Finance() {
     }
   };
 
+  const handleInvoiceSubmit = async (data) => {
+    if (editingInvoice) {
+      await updateInvoiceMutation.mutateAsync({ id: editingInvoice.id, data });
+    } else {
+      await createInvoiceMutation.mutateAsync(data);
+    }
+  };
+
   const handleEditTransaction = (transaction) => {
     setEditingTransaction(transaction);
     setShowTransactionForm(true);
+    setShowInvoiceForm(false);
+  };
+
+  const handleEditInvoice = (invoice) => {
+    setEditingInvoice(invoice);
+    setShowInvoiceForm(true);
+    setShowTransactionForm(false);
+    setActiveTab('invoices');
+  };
+
+  const handleInvoiceStatusChange = async (invoiceId, newStatus) => {
+    const invoice = invoices.find(inv => inv.id === invoiceId);
+    if (invoice) {
+      await updateInvoiceMutation.mutateAsync({
+        id: invoiceId,
+        data: { ...invoice, status: newStatus }
+      });
+    }
   };
 
   // Calculate stats
@@ -133,7 +205,7 @@ export default function Finance() {
 
   const COLORS = ['#A78BFA', '#93C5FD', '#86EFAC', '#FCD34D', '#F472B6', '#34D399'];
 
-  if (transactionsLoading) {
+  if (transactionsLoading || invoicesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
@@ -151,7 +223,11 @@ export default function Finance() {
         </div>
         <div className="flex gap-3">
           <Button
-            onClick={() => setShowTransactionForm(!showTransactionForm)}
+            onClick={() => {
+              setShowTransactionForm(!showTransactionForm);
+              setShowInvoiceForm(false);
+              setEditingTransaction(null);
+            }}
             className="rounded-[14px] text-white"
             style={{ background: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' }}
             aria-label="Add new transaction"
@@ -160,7 +236,12 @@ export default function Finance() {
             Transaction
           </Button>
           <Button
-            onClick={() => setShowInvoiceForm(!showInvoiceForm)}
+            onClick={() => {
+              setShowInvoiceForm(!showInvoiceForm);
+              setShowTransactionForm(false);
+              setEditingInvoice(null);
+              setActiveTab('invoices');
+            }}
             className="rounded-[14px] text-white"
             style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}
             aria-label="Create new invoice"
@@ -171,15 +252,32 @@ export default function Finance() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="mb-8">
-        <FinanceStats
-          totalIncome={totalIncome}
-          totalExpenses={totalExpenses}
-          netProfit={netProfit}
-          unpaidAmount={unpaidAmount}
-          currency={user?.currency}
-        />
+      {/* Tabs */}
+      <div className="flex gap-2 mb-8 overflow-x-auto">
+        {[
+          { id: 'overview', label: 'Overview', icon: TrendingUp },
+          { id: 'invoices', label: 'Invoices', icon: FileText }
+        ].map(tab => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-6 py-3 rounded-[14px] font-medium transition-all ${
+                activeTab === tab.id
+                  ? 'text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+              style={activeTab === tab.id ? {
+                background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
+                boxShadow: '0 4px 16px rgba(139, 92, 246, 0.3)'
+              } : {}}
+            >
+              <Icon className="w-5 h-5" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Transaction Form */}
@@ -193,58 +291,114 @@ export default function Finance() {
         )}
       </AnimatePresence>
 
-      {/* AI Financial Forecast Section */}
-      <div className="mb-8">
-        <AIForecast transactions={transactions} user={user} />
-      </div>
+      {/* Invoice Form */}
+      <AnimatePresence>
+        {showInvoiceForm && (
+          <InvoiceForm
+            invoice={editingInvoice}
+            onSubmit={handleInvoiceSubmit}
+            onCancel={resetInvoiceForm}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Income vs Expenses</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="month" stroke="#6B7280" />
-              <YAxis stroke="#6B7280" />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="income" fill="#86EFAC" name="Income" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="expenses" fill="#FCA5A5" name="Expenses" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+      {/* Content based on active tab */}
+      {activeTab === 'overview' && (
+        <>
+          {/* Stats Cards */}
+          <div className="mb-8">
+            <FinanceStats
+              totalIncome={totalIncome}
+              totalExpenses={totalExpenses}
+              netProfit={netProfit}
+              unpaidAmount={unpaidAmount}
+              currency={user?.currency}
+            />
+          </div>
 
-        <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Spending by Category</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
+          {/* AI Financial Forecast Section */}
+          <div className="mb-8">
+            <AIForecast transactions={transactions} user={user} />
+          </div>
 
-      {/* Recent Transactions */}
-      <TransactionList
-        transactions={transactions}
-        onEdit={handleEditTransaction}
-        onDelete={(id) => deleteTransactionMutation.mutate(id)}
-      />
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+              <h3 className="text-lg font-bold text-gray-800 mb-4">Income vs Expenses</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="month" stroke="#6B7280" />
+                  <YAxis stroke="#6B7280" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="income" fill="#86EFAC" name="Income" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="expenses" fill="#FCA5A5" name="Expenses" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+
+            <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+              <h3 className="text-lg font-bold text-gray-800 mb-4">Spending by Category</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+
+          {/* Recent Transactions */}
+          <TransactionList
+            transactions={transactions}
+            onEdit={handleEditTransaction}
+            onDelete={(id) => deleteTransactionMutation.mutate(id)}
+          />
+        </>
+      )}
+
+      {activeTab === 'invoices' && (
+        <>
+          {/* Invoice Stats */}
+          <div className="mb-8">
+            <InvoiceStats invoices={invoices} currency={user?.currency} />
+          </div>
+
+          {/* Invoice List */}
+          <InvoiceList
+            invoices={invoices}
+            onEdit={handleEditInvoice}
+            onDelete={(id) => deleteInvoiceMutation.mutate(id)}
+            onView={setViewingInvoice}
+            onStatusChange={handleInvoiceStatusChange}
+          />
+        </>
+      )}
+
+      {/* Invoice View Modal */}
+      <AnimatePresence>
+        {viewingInvoice && (
+          <InvoiceView
+            invoice={viewingInvoice}
+            user={user}
+            onClose={() => setViewingInvoice(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
