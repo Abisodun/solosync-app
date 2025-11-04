@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,11 +7,13 @@ import { CheckCircle2, ArrowRight, Sparkles, Target, DollarSign, Calendar, Heart
 import { motion } from 'framer-motion';
 import HeroSection from '../components/landing/HeroSection';
 import FeaturesShowcase from '../components/landing/FeaturesShowcase';
+import DayInLifeSection from '../components/landing/DayInLifeSection'; // Added import
 import ComparisonSection from '../components/landing/ComparisonSection';
 import TestimonialsSection from '../components/landing/TestimonialsSection';
 import DemoSection from '../components/landing/DemoSection';
 import PricingSection from '../components/landing/PricingSection';
 import Footer from '../components/landing/Footer';
+import FloatingCTA from '../components/landing/FloatingCTA'; // Added import
 
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
@@ -92,6 +95,9 @@ export default function Landing() {
       {/* Features Showcase */}
       <FeaturesShowcase />
 
+      {/* Day in Life Section */} {/* Added component */}
+      <DayInLifeSection />
+
       {/* Comparison Section */}
       <ComparisonSection />
 
@@ -106,6 +112,9 @@ export default function Landing() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Floating CTA */} {/* Added component */}
+      <FloatingCTA />
     </div>
   );
 }
