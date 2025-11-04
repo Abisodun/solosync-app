@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Check, Sparkles, Zap, Crown } from 'lucide-react';
+import { Check, Sparkles, Zap, Crown, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 
@@ -66,8 +67,16 @@ const plans = [
 
 export default function PricingSection() {
   return (
-    <section id="pricing" className="py-20 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto">
+    <section id="pricing" className="py-20 px-4 md:px-8 relative">
+      {/* Alternating background */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(135deg, rgba(249, 250, 251, 0.95) 0%, rgba(243, 244, 246, 0.95) 100%)'
+        }}
+      />
+
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -192,7 +201,7 @@ export default function PricingSection() {
 
                   {/* CTA Button */}
                   <Button
-                    className={`w-full rounded-[16px] py-6 font-semibold text-lg mb-8 ${
+                    className={`w-full rounded-[16px] py-6 font-semibold text-lg mb-8 group ${
                       plan.popular ? 'text-white' : ''
                     }`}
                     variant={plan.popular ? 'default' : 'outline'}
@@ -217,6 +226,7 @@ export default function PricingSection() {
                     }
                   >
                     {plan.cta}
+                    <ArrowRight className="inline-block ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
 
                   {/* Features List */}
@@ -249,7 +259,7 @@ export default function PricingSection() {
           })}
         </div>
 
-        {/* FAQ / Additional Info */}
+        {/* FAQ / Additional Info - Enhanced */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -260,22 +270,25 @@ export default function PricingSection() {
           <div
             className="inline-block px-8 py-6 rounded-[20px]"
             style={{
-              background: 'rgba(255, 255, 255, 0.9)',
+              background: 'rgba(255, 255, 255, 0.95)',
               boxShadow: `
-                0 8px 32px rgba(167, 139, 250, 0.15),
-                inset 0 2px 8px rgba(255, 255, 255, 0.8),
+                0 12px 40px rgba(167, 139, 250, 0.2),
+                inset 0 2px 8px rgba(255, 255, 255, 0.9),
                 inset 0 -2px 8px rgba(167, 139, 250, 0.1)
               `
             }}
           >
-            <p className="text-gray-700 mb-2">
+            <p className="text-lg text-gray-700 mb-2">
               <span className="font-semibold">Not sure which plan is right for you?</span>
             </p>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-4">
               Start with our free plan and upgrade anytime. Questions?{' '}
-              <a href="#" className="text-purple-600 font-semibold hover:text-purple-700">
+              <a href="#" className="text-purple-600 font-semibold hover:text-purple-700 underline">
                 Contact us
               </a>
+            </p>
+            <p className="text-sm text-gray-500">
+              💳 All plans include secure payment • 🔒 Your data is protected • ⚡ Instant setup
             </p>
           </div>
         </motion.div>
