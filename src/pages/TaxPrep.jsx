@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -6,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, Lightbulb, ArrowRight, ArrowLeft, Receipt, CircleDollarSign, CheckCircle2, Info, AlertTriangle, Sparkles } from 'lucide-react';
+import { FileText, Download, Lightbulb, ArrowRight, ArrowLeft, Receipt, CircleDollarSign, CheckCircle2, Info, AlertTriangle, Sparkles, Calculator } from 'lucide-react';
 import { format, parseISO, getYear } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
+import UpgradeModal from '../components/subscription/UpgradeModal';
 
 export default function TaxPrep() {
   const [user, setUser] = useState(null);
@@ -16,11 +18,18 @@ export default function TaxPrep() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear() - 1);
   const [deductionRecommendations, setDeductionRecommendations] = useState('');
   const [loadingDeductions, setLoadingDeductions] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+      
+      // Check if user has access to Tax Prep
+      const hasAccess = currentUser.subscription_tier === 'pro' || currentUser.subscription_tier === 'enterprise';
+      if (!hasAccess) {
+        setShowUpgradeModal(true);
+      }
     };
     loadUser();
   }, []);
@@ -435,6 +444,42 @@ Start with a clear disclaimer that this is general information only, not tax adv
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
       </div>
+    );
+  }
+
+  const hasAccess = user.subscription_tier === 'pro' || user.subscription_tier === 'enterprise';
+
+  if (!hasAccess) {
+    return (
+      <>
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          featureName="Tax Prep Tools"
+        />
+        <div className="text-center py-20">
+          <div
+            className="w-20 h-20 rounded-[20px] flex items-center justify-center mx-auto mb-6"
+            style={{
+              background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)',
+              boxShadow: '0 12px 40px rgba(245, 158, 11, 0.3)'
+            }}
+          >
+            <Calculator className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">Tax Prep Tools</h2>
+          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            Organize your finances for tax season with AI-powered deduction recommendations, annual summaries, and export tools.
+          </p>
+          <Button
+            onClick={() => setShowUpgradeModal(true)}
+            className="rounded-[14px] text-white font-semibold px-8 py-6 text-lg"
+            style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+          >
+            Upgrade to Access Tax Prep
+          </Button>
+        </div>
+      </>
     );
   }
 

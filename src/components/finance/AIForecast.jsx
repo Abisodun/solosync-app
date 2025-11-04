@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,12 +7,21 @@ import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import ReactMarkdown from 'react-markdown';
 import { format, addMonths, startOfMonth } from 'date-fns';
+import UpgradeModal from '../subscription/UpgradeModal';
 
 export default function AIForecast({ transactions, user }) {
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  const hasAccess = user && (user.subscription_tier === 'pro' || user.subscription_tier === 'enterprise');
 
   const generateForecast = async () => {
+    if (!hasAccess) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     setLoading(true);
     try {
       // Prepare historical data summary
@@ -98,14 +108,14 @@ Format your response in clear sections with headers. Be specific and data-driven
       // Parse forecast numbers from the response
       const forecastData = [];
       const today = new Date();
-      
+
       // Create 3-month forecast with predictions
       for (let i = 1; i <= 3; i++) {
         const futureMonth = addMonths(startOfMonth(today), i);
         // Use trend-adjusted predictions
-        const trend = recentData.length >= 2 ? 
+        const trend = recentData.length >= 2 ?
           (recentData[recentData.length - 1].income - recentData[0].income) / recentData.length : 0;
-        
+
         forecastData.push({
           month: format(futureMonth, 'MMM yyyy'),
           income: Math.round(avgIncome + (trend * i)),
@@ -139,6 +149,56 @@ Format your response in clear sections with headers. Be specific and data-driven
     }
     setLoading(false);
   };
+
+  if (!hasAccess) {
+    return (
+      <>
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          featureName="AI Financial Forecasting"
+        />
+        <Card className="p-6 rounded-[20px]" style={{
+          background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
+          boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)'
+        }}>
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{
+                background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)'
+              }}>
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">AI Financial Forecast</h3>
+                <p className="text-gray-600 mb-4">
+                  Unlock AI-powered predictions, cash flow analysis, and personalized financial recommendations
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="px-3 py-1 rounded-[8px] bg-purple-100 text-purple-700 text-sm font-medium">
+                    3-Month Predictions
+                  </span>
+                  <span className="px-3 py-1 rounded-[8px] bg-blue-100 text-blue-700 text-sm font-medium">
+                    Cash Flow Alerts
+                  </span>
+                  <span className="px-3 py-1 rounded-[8px] bg-green-100 text-green-700 text-sm font-medium">
+                    Savings Tips
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <Button
+            onClick={() => setShowUpgradeModal(true)}
+            className="mt-4 rounded-[14px] text-white font-semibold"
+            style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+          >
+            Upgrade to Pro for AI Forecasting
+          </Button>
+        </Card>
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -211,9 +271,9 @@ Format your response in clear sections with headers. Be specific and data-driven
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                 <XAxis dataKey="month" stroke="#6B7280" />
                 <YAxis stroke="#6B7280" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     borderRadius: '12px',
                     border: '1px solid #E5E7EB',
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
@@ -221,28 +281,28 @@ Format your response in clear sections with headers. Be specific and data-driven
                 />
                 <Legend />
                 <ReferenceLine x={forecast.data.findIndex(d => d.isForecast) - 0.5} stroke="#9CA3AF" strokeDasharray="5 5" label="Forecast Start" />
-                <Line 
-                  type="monotone" 
-                  dataKey="income" 
-                  stroke="#86EFAC" 
+                <Line
+                  type="monotone"
+                  dataKey="income"
+                  stroke="#86EFAC"
                   strokeWidth={3}
                   name="Income"
                   dot={{ fill: '#10B981', r: 4 }}
                   activeDot={{ r: 6 }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="expenses" 
-                  stroke="#FCA5A5" 
+                <Line
+                  type="monotone"
+                  dataKey="expenses"
+                  stroke="#FCA5A5"
                   strokeWidth={3}
                   name="Expenses"
                   dot={{ fill: '#EF4444', r: 4 }}
                   activeDot={{ r: 6 }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="net" 
-                  stroke="#A78BFA" 
+                <Line
+                  type="monotone"
+                  dataKey="net"
+                  stroke="#A78BFA"
                   strokeWidth={3}
                   name="Net"
                   dot={{ fill: '#8B5CF6', r: 4 }}
@@ -274,8 +334,8 @@ Format your response in clear sections with headers. Be specific and data-driven
               </div>
             </Card>
 
-            <Card className="p-5 rounded-[16px]" style={{ 
-              background: forecast.avgNet >= 0 ? 'rgba(147, 197, 253, 0.1)' : 'rgba(252, 165, 165, 0.1)' 
+            <Card className="p-5 rounded-[16px]" style={{
+              background: forecast.avgNet >= 0 ? 'rgba(147, 197, 253, 0.1)' : 'rgba(252, 165, 165, 0.1)'
             }}>
               <div className="flex items-center gap-3 mb-2">
                 <DollarSign className={`w-5 h-5 ${forecast.avgNet >= 0 ? 'text-blue-600' : 'text-red-600'}`} />
@@ -294,7 +354,7 @@ Format your response in clear sections with headers. Be specific and data-driven
               <h3 className="text-xl font-bold text-gray-800">AI Insights & Recommendations</h3>
             </div>
             <div className="prose prose-sm prose-slate max-w-none">
-              <ReactMarkdown 
+              <ReactMarkdown
                 className="text-gray-700 leading-relaxed"
                 components={{
                   h1: ({children}) => <h3 className="text-lg font-bold text-gray-800 mt-6 mb-3">{children}</h3>,
@@ -319,7 +379,7 @@ Format your response in clear sections with headers. Be specific and data-driven
           <Card className="p-5 rounded-[16px] border-2 border-purple-100" style={{ background: 'rgba(243, 232, 255, 0.5)' }}>
             <p className="text-sm text-gray-700">
               <AlertCircle className="inline w-4 h-4 mr-1 text-purple-600" />
-              <strong>Disclaimer:</strong> This forecast is generated by AI based on historical data and should be used as guidance only. 
+              <strong>Disclaimer:</strong> This forecast is generated by AI based on historical data and should be used as guidance only.
               Actual results may vary. Consult with a financial advisor for personalized advice.
             </p>
           </Card>

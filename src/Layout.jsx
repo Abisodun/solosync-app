@@ -3,20 +3,22 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { 
-  LayoutDashboard, 
-  CheckSquare, 
-  Target, 
-  DollarSign, 
-  Calendar, 
+import {
+  LayoutDashboard,
+  CheckSquare,
+  Target,
+  DollarSign,
+  Calendar,
   Heart,
   Sparkles,
   Menu,
   X,
   LogOut,
-  Calculator
+  Calculator,
+  Settings as SettingsIcon // Added SettingsIcon import
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import SubscriptionBanner from '../components/subscription/SubscriptionBanner'; // Added SubscriptionBanner import
 
 const navigation = [
   { name: 'Dashboard', icon: LayoutDashboard, page: 'Dashboard' },
@@ -25,12 +27,14 @@ const navigation = [
   { name: 'Finance', icon: DollarSign, page: 'Finance' },
   { name: 'Content', icon: Calendar, page: 'Content' },
   { name: 'Habits', icon: Heart, page: 'Habits' },
-  { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep' }
+  { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep', proBadge: true }, // Added proBadge
+  { name: 'Settings', icon: SettingsIcon, page: 'Settings' } // Added Settings navigation item
 ];
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showBanner, setShowBanner] = useState(true); // Added showBanner state
 
   useEffect(() => {
     loadUser();
@@ -89,7 +93,7 @@ export default function Layout({ children, currentPageName }) {
                   <Link
                     key={item.name}
                     to={createPageUrl(item.page)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-[12px] transition-all ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-[12px] transition-all relative ${ // Added relative class
                       isActive
                         ? 'bg-white text-purple-600 shadow-md'
                         : 'text-gray-600 hover:bg-white/70'
@@ -97,6 +101,11 @@ export default function Layout({ children, currentPageName }) {
                   >
                     <Icon className="w-4 h-4" />
                     <span className="font-medium">{item.name}</span>
+                    {item.proBadge && ( // Conditionally render PRO badge
+                      <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-bold bg-purple-100 text-purple-700">
+                        PRO
+                      </span>
+                    )}
                   </Link>
                 );
               })}
@@ -153,6 +162,11 @@ export default function Layout({ children, currentPageName }) {
                   >
                     <Icon className="w-5 h-5" />
                     <span className="font-medium">{item.name}</span>
+                    {item.proBadge && ( // Conditionally render PRO badge for mobile
+                      <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-bold bg-purple-100 text-purple-700 ml-auto">
+                        PRO
+                      </span>
+                    )}
                   </Link>
                 );
               })}
@@ -170,6 +184,13 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Subscription Banner */}
+        {showBanner && (
+          <div className="mb-6">
+            <SubscriptionBanner user={user} onDismiss={() => setShowBanner(false)} />
+          </div>
+        )}
+
         {children}
       </main>
     </div>
