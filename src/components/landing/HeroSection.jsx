@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Sparkles, CheckCircle2, Circle, TrendingUp, Target, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function HeroSection() {
@@ -194,23 +195,33 @@ export default function HeroSection() {
                   `
                 }}
               >
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className="w-10 h-10 rounded-[12px] flex items-center justify-center"
-                    style={{
-                      background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
-                      boxShadow: `inset 0 2px 4px rgba(255, 255, 255, 0.3)`
-                    }}
-                  >
-                    <CheckCircle2 className="w-5 h-5 text-white" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-[12px] flex items-center justify-center"
+                      style={{
+                        background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
+                        boxShadow: `inset 0 2px 4px rgba(255, 255, 255, 0.3)`
+                      }}
+                    >
+                      <CheckCircle2 className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="font-semibold text-gray-800">Today's Tasks</span>
                   </div>
-                  <span className="font-semibold text-gray-800">Today's Tasks</span>
+                  <span className="text-xs text-purple-600 font-medium">3/8 completed</span>
                 </div>
                 <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div
+                  {[
+                    { task: 'Finish client proposal', done: true },
+                    { task: 'Review marketing strategy', done: true },
+                    { task: 'Update portfolio website', done: false }
+                  ].map((item, i) => (
+                    <motion.div
                       key={i}
-                      className="h-12 rounded-[14px]"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.6 + i * 0.1 }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-[14px]"
                       style={{
                         background: 'rgba(255, 255, 255, 0.7)',
                         boxShadow: `
@@ -218,7 +229,26 @@ export default function HeroSection() {
                           0 2px 8px rgba(167, 139, 250, 0.08)
                         `
                       }}
-                    />
+                    >
+                      <div
+                        className="w-5 h-5 rounded-[8px] flex items-center justify-center flex-shrink-0"
+                        style={{
+                          background: item.done
+                            ? 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)'
+                            : 'rgba(167, 139, 250, 0.15)',
+                          boxShadow: item.done ? `inset 0 2px 4px rgba(255, 255, 255, 0.3)` : 'none'
+                        }}
+                      >
+                        {item.done ? (
+                          <CheckCircle2 className="w-3 h-3 text-white" />
+                        ) : (
+                          <Circle className="w-3 h-3 text-purple-400" />
+                        )}
+                      </div>
+                      <span className={`text-sm ${item.done ? 'text-gray-500 line-through' : 'text-gray-700 font-medium'}`}>
+                        {item.task}
+                      </span>
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -247,17 +277,35 @@ export default function HeroSection() {
                   </div>
                   <span className="font-semibold text-gray-800">Progress</span>
                 </div>
-                <div className="space-y-3">
-                  <div
-                    className="h-24 rounded-[14px]"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.7)',
-                      boxShadow: `
-                        inset 0 2px 6px rgba(134, 239, 172, 0.1),
-                        0 2px 8px rgba(134, 239, 172, 0.08)
-                      `
-                    }}
-                  />
+                <div className="space-y-4">
+                  {[
+                    { icon: Target, label: 'Weekly Goals', value: '7/10', color: '#F472B6' },
+                    { icon: TrendingUp, label: 'Tasks Done', value: '24', color: '#A78BFA' },
+                    { icon: DollarSign, label: 'Revenue', value: '$3.2K', color: '#86EFAC' }
+                  ].map((stat, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 + i * 0.1 }}
+                      className="px-3 py-2.5 rounded-[12px]"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.7)',
+                        boxShadow: `
+                          inset 0 2px 6px rgba(134, 239, 172, 0.1),
+                          0 2px 8px rgba(134, 239, 172, 0.08)
+                        `
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <stat.icon className="w-4 h-4" style={{ color: stat.color }} />
+                          <span className="text-xs text-gray-600">{stat.label}</span>
+                        </div>
+                        <span className="text-sm font-bold text-gray-800">{stat.value}</span>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             </div>
