@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { Plus, DollarSign, TrendingUp, TrendingDown, FileText, AlertCircle, Edit
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import AIForecast from '../components/finance/AIForecast';
 
 export default function Finance() {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
@@ -23,8 +25,22 @@ export default function Finance() {
     date: new Date().toISOString().split('T')[0],
     client_name: ''
   });
+  const [user, setUser] = useState(null);
 
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch (error) {
+        console.error("Failed to load user:", error);
+        // Handle error, e.g., redirect to login or show a message
+      }
+    };
+    loadUser();
+  }, []);
 
   const { data: transactions = [] } = useQuery({
     queryKey: ['transactions'],
@@ -206,6 +222,11 @@ export default function Finance() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* AI Financial Forecast Section */}
+      <div className="mb-8">
+        <AIForecast transactions={transactions} user={user} />
+      </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
