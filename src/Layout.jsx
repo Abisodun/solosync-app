@@ -15,8 +15,9 @@ import {
   X,
   LogOut,
   Calculator,
-  Settings as SettingsIcon,
-  Users // Added Users icon import
+  Users,
+  Zap, // Added Zap icon import
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import SubscriptionBanner from './components/subscription/SubscriptionBanner';
@@ -27,7 +28,8 @@ const navigation = [
   { name: 'Tasks', icon: CheckSquare, page: 'Tasks' },
   { name: 'Goals', icon: Target, page: 'Goals' },
   { name: 'Finance', icon: DollarSign, page: 'Finance' },
-  { name: 'Clients', icon: Users, page: 'Clients' }, // New navigation item
+  { name: 'Clients', icon: Users, page: 'Clients' },
+  { name: 'Workflows', icon: Zap, page: 'Workflows' }, // New navigation item
   { name: 'Content', icon: Calendar, page: 'Content' },
   { name: 'Habits', icon: Heart, page: 'Habits' },
   { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep', proBadge: true },
