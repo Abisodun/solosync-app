@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X } from 'lucide-react';
+import { createPageUrl } from '@/utils';
 
 export default function FloatingCTA() {
   const [isVisible, setIsVisible] = useState(false);
@@ -67,6 +69,7 @@ export default function FloatingCTA() {
 
             {/* CTA Button */}
             <button
+              onClick={() => window.location.href = createPageUrl('Onboarding')}
               className="w-full py-3 px-6 rounded-[16px] text-white font-semibold flex items-center justify-center gap-2 group transition-all hover:scale-105"
               style={{
                 background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',

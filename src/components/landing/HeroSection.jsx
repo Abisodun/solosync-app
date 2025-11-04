@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, CheckCircle2, Circle, TrendingUp, Target, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { createPageUrl } from '@/utils';
 
 export default function HeroSection() {
   return (
@@ -110,6 +111,7 @@ export default function HeroSection() {
           >
             <Button
               size="lg"
+              onClick={() => window.location.href = createPageUrl('Onboarding')}
               className="rounded-[18px] px-8 py-6 text-lg font-semibold text-white group"
               style={{
                 background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',

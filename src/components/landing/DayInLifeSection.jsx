@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Coffee, Target, DollarSign, FileText, Calendar, TrendingUp, Award } from 'lucide-react';
+import { createPageUrl } from '@/utils';
 
 const timeline = [
   {
@@ -154,6 +156,7 @@ export default function DayInLifeSection() {
           className="text-center mt-16"
         >
           <button
+            onClick={() => window.location.href = createPageUrl('Onboarding')}
             className="px-10 py-5 rounded-[18px] text-white font-bold text-lg transition-all hover:scale-105 hover:shadow-2xl"
             style={{
               background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
