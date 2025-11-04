@@ -1,6 +1,8 @@
+
 import React from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Button } from "@/components/ui/button";
 
 const comparisons = [
   { feature: 'Task Management', solosync: true, others: true },
@@ -19,8 +21,16 @@ const comparisons = [
 
 export default function ComparisonSection() {
   return (
-    <section id="comparison" className="py-20 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto">
+    <section id="comparison" className="py-20 px-4 md:px-8 relative">
+      {/* Alternating background */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(135deg, rgba(134, 239, 172, 0.05) 0%, rgba(167, 139, 250, 0.05) 100%)'
+        }}
+      />
+
+      <div className="max-w-6xl mx-auto relative z-10">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -158,29 +168,37 @@ export default function ComparisonSection() {
             ))}
           </div>
 
-          {/* Bottom CTA */}
+          {/* Bottom CTA - Enhanced */}
           <div
             className="p-8 text-center"
             style={{
               background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)'
             }}
           >
-            <p className="text-lg text-gray-700 mb-4 font-semibold">
+            <p className="text-xl text-gray-700 mb-4 font-bold">
               Get everything you need in one platform
             </p>
-            <button
-              className="px-8 py-4 rounded-[16px] text-white font-semibold transition-transform hover:scale-105"
+            <p className="text-gray-600 mb-6">
+              Say goodbye to app-switching and hello to productivity
+            </p>
+            <Button
+              size="lg"
+              className="rounded-[18px] px-10 py-6 text-white font-bold text-lg transition-all hover:scale-105 group"
               style={{
                 background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
                 boxShadow: `
-                  0 8px 24px rgba(139, 92, 246, 0.3),
-                  inset 0 2px 6px rgba(255, 255, 255, 0.3),
-                  inset 0 -2px 6px rgba(0, 0, 0, 0.1)
+                  0 12px 40px rgba(139, 92, 246, 0.4),
+                  inset 0 2px 8px rgba(255, 255, 255, 0.3),
+                  inset 0 -2px 8px rgba(0, 0, 0, 0.1)
                 `
               }}
             >
               Try SoloSync Free
-            </button>
+              <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            <p className="text-sm text-gray-500 mt-4">
+              Join 10,000+ professionals who made the switch
+            </p>
           </div>
         </motion.div>
       </div>
