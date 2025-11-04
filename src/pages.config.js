@@ -6,6 +6,7 @@ import Goals from './pages/Goals';
 import Finance from './pages/Finance';
 import TaxPrep from './pages/TaxPrep';
 import Settings from './pages/Settings';
+import Clients from './pages/Clients';
 import Layout from './Layout.jsx';
 
 
@@ -18,6 +19,7 @@ export const PAGES = {
     "Finance": Finance,
     "TaxPrep": TaxPrep,
     "Settings": Settings,
+    "Clients": Clients,
 }
 
 export const pagesConfig = {

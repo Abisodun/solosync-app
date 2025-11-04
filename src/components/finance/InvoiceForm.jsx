@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { motion } from 'framer-motion';
 import { AlertCircle, Plus, Trash2, FileText } from 'lucide-react';
 import { format } from 'date-fns';
+
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 const validateInput = (value, maxLength = 100) => {
   if (!value) return '';
@@ -34,6 +38,7 @@ const generateInvoiceNumber = () => {
 export default function InvoiceForm({ invoice, onSubmit, onCancel }) {
   const [formData, setFormData] = useState(invoice || {
     invoice_number: generateInvoiceNumber(),
+    client_id: '',
     client_name: '',
     client_email: '',
     client_address: '',
@@ -49,6 +54,23 @@ export default function InvoiceForm({ invoice, onSubmit, onCancel }) {
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [useExistingClient, setUseExistingClient] = useState(false);
+
+  // Load clients
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: async () => {
+      try {
+        return await base44.entities.Client.list('name', 500);
+      } catch (error) {
+        console.error('Error loading clients:', error);
+        return [];
+      }
+    }
+  });
+
+  // Filter active clients
+  const activeClients = clients.filter(c => c.status === 'active' || c.status === 'lead');
 
   // Calculate total whenever items or tax change
   useEffect(() => {
@@ -155,6 +177,21 @@ export default function InvoiceForm({ invoice, onSubmit, onCancel }) {
   const tax = subtotal * (formData.tax_rate / 100);
   const total = subtotal + tax;
 
+  const handleClientSelect = (clientId) => {
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      setFormData(prev => ({
+        ...prev,
+        client_id: client.id,
+        client_name: client.name,
+        client_email: client.email || client.billing_email || '',
+        client_phone: client.phone || '',
+        client_address: client.address || '',
+        payment_terms: client.payment_terms || 'Net 30'
+      }));
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -179,73 +216,133 @@ export default function InvoiceForm({ invoice, onSubmit, onCancel }) {
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Client Selection Toggle */}
+          <div className="flex items-center gap-4 p-4 rounded-[14px] bg-purple-50">
+            <input
+              type="checkbox"
+              id="useExistingClient"
+              checked={useExistingClient}
+              onChange={(e) => setUseExistingClient(e.target.checked)}
+              className="w-4 h-4 rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+            />
+            <label htmlFor="useExistingClient" className="text-sm font-medium text-purple-900 cursor-pointer">
+              Select from existing clients
+            </label>
+          </div>
+
           {/* Client Information */}
           <div className="space-y-4">
             <h4 className="text-lg font-semibold text-gray-800">Client Information</h4>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {useExistingClient ? (
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Client Name *</label>
-                <Input
-                  placeholder="John Doe / Acme Corp"
-                  value={formData.client_name}
-                  onChange={(e) => handleFieldChange('client_name', validateInput(e.target.value, 200))}
-                  maxLength={200}
-                  className={`rounded-[12px] ${errors.client_name ? 'border-red-500' : ''}`}
-                  aria-invalid={!!errors.client_name}
-                  aria-describedby={errors.client_name ? 'client-name-error' : undefined}
-                />
-                {errors.client_name && (
-                  <p id="client-name-error" className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {errors.client_name}
-                  </p>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Select Client *</label>
+                <Select 
+                  value={formData.client_id} 
+                  onValueChange={handleClientSelect}
+                >
+                  <SelectTrigger className="rounded-[12px]">
+                    <SelectValue placeholder="Choose a client..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeClients.length === 0 ? (
+                      <div className="p-4 text-sm text-gray-500 text-center">
+                        No clients found. Add clients in the Clients page.
+                      </div>
+                    ) : (
+                      activeClients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{client.name}</span>
+                            {client.company && (
+                              <span className="text-xs text-gray-500">{client.company}</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                
+                {formData.client_id && (
+                  <div className="mt-3 p-3 rounded-[12px] bg-gray-50 text-sm">
+                    <div className="font-medium text-gray-800 mb-1">{formData.client_name}</div>
+                    {formData.client_email && (
+                      <div className="text-gray-600">{formData.client_email}</div>
+                    )}
+                    {formData.client_phone && (
+                      <div className="text-gray-600">{formData.client_phone}</div>
+                    )}
+                  </div>
                 )}
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Client Name *</label>
+                    <Input
+                      placeholder="John Doe / Acme Corp"
+                      value={formData.client_name}
+                      onChange={(e) => handleFieldChange('client_name', validateInput(e.target.value, 200))}
+                      maxLength={200}
+                      className={`rounded-[12px] ${errors.client_name ? 'border-red-500' : ''}`}
+                      aria-invalid={!!errors.client_name}
+                      aria-describedby={errors.client_name ? 'client-name-error' : undefined}
+                    />
+                    {errors.client_name && (
+                      <p id="client-name-error" className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.client_name}
+                      </p>
+                    )}
+                  </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Client Email</label>
-                <Input
-                  type="email"
-                  placeholder="client@example.com"
-                  value={formData.client_email}
-                  onChange={(e) => handleFieldChange('client_email', validateInput(e.target.value, 100))}
-                  maxLength={100}
-                  className={`rounded-[12px] ${errors.client_email ? 'border-red-500' : ''}`}
-                  aria-invalid={!!errors.client_email}
-                />
-                {errors.client_email && (
-                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {errors.client_email}
-                  </p>
-                )}
-              </div>
-            </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Client Email</label>
+                    <Input
+                      type="email"
+                      placeholder="client@example.com"
+                      value={formData.client_email}
+                      onChange={(e) => handleFieldChange('client_email', validateInput(e.target.value, 100))}
+                      maxLength={100}
+                      className={`rounded-[12px] ${errors.client_email ? 'border-red-500' : ''}`}
+                      aria-invalid={!!errors.client_email}
+                    />
+                    {errors.client_email && (
+                      <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.client_email}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Phone Number</label>
-                <Input
-                  placeholder="+1 (555) 123-4567"
-                  value={formData.client_phone}
-                  onChange={(e) => handleFieldChange('client_phone', validateInput(e.target.value, 50))}
-                  maxLength={50}
-                  className="rounded-[12px]"
-                />
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Phone Number</label>
+                    <Input
+                      placeholder="+1 (555) 123-4567"
+                      value={formData.client_phone}
+                      onChange={(e) => handleFieldChange('client_phone', validateInput(e.target.value, 50))}
+                      maxLength={50}
+                      className="rounded-[12px]"
+                    />
+                  </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Address</label>
-                <Input
-                  placeholder="123 Main St, City, State"
-                  value={formData.client_address}
-                  onChange={(e) => handleFieldChange('client_address', validateInput(e.target.value, 200))}
-                  maxLength={200}
-                  className="rounded-[12px]"
-                />
-              </div>
-            </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Address</label>
+                    <Input
+                      placeholder="123 Main St, City, State"
+                      value={formData.client_address}
+                      onChange={(e) => handleFieldChange('client_address', validateInput(e.target.value, 200))}
+                      maxLength={200}
+                      className="rounded-[12px]"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Invoice Details */}

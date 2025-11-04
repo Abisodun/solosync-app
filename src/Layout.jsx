@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -14,7 +15,8 @@ import {
   X,
   LogOut,
   Calculator,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Users // Added Users icon import
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import SubscriptionBanner from './components/subscription/SubscriptionBanner';
@@ -25,6 +27,7 @@ const navigation = [
   { name: 'Tasks', icon: CheckSquare, page: 'Tasks' },
   { name: 'Goals', icon: Target, page: 'Goals' },
   { name: 'Finance', icon: DollarSign, page: 'Finance' },
+  { name: 'Clients', icon: Users, page: 'Clients' }, // New navigation item
   { name: 'Content', icon: Calendar, page: 'Content' },
   { name: 'Habits', icon: Heart, page: 'Habits' },
   { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep', proBadge: true },
