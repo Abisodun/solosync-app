@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Sparkles, Twitter, Linkedin, Instagram, Mail, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Logo from './Logo';
 
 const footerLinks = {
   product: [
@@ -119,19 +121,8 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-12">
           {/* Brand Column */}
           <div className="col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div
-                className="w-10 h-10 rounded-[14px] flex items-center justify-center"
-                style={{
-                  background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
-                  boxShadow: `
-                    0 4px 16px rgba(139, 92, 246, 0.3),
-                    inset 0 2px 4px rgba(255, 255, 255, 0.3)
-                  `
-                }}
-              >
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+            <div className="flex items-center gap-3 mb-4">
+              <Logo className="w-10 h-10" />
               <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 SoloSync
               </span>
