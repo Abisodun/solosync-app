@@ -3,6 +3,7 @@ import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
 import Goals from './pages/Goals';
+import Finance from './pages/Finance';
 import Layout from './Layout.jsx';
 
 
@@ -12,6 +13,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "Tasks": Tasks,
     "Goals": Goals,
+    "Finance": Finance,
 }
 
 export const pagesConfig = {
