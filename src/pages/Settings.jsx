@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -6,35 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings as SettingsIcon, User, CreditCard, Globe, Sparkles, Check, Crown, Zap, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Settings as SettingsIcon, User, CreditCard, Globe, Sparkles, Check, Crown, Zap, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 
-// Helper function to sanitize input
-const sanitizeInput = (value) => {
-  if (typeof value !== 'string') return '';
-  // Basic sanitization: trim whitespace. Additional sanitization for XSS prevention might be required
-  // if these inputs are rendered directly in HTML in other parts of the application.
-  return value.trim();
+const validateInput = (value, maxLength = 100) => {
+  if (!value) return '';
+  return String(value).trim().slice(0, maxLength);
 };
 
-// Helper function to validate and truncate input
-const validateInput = (value, maxLength) => {
-  if (typeof value !== 'string') return '';
-  const trimmed = value.trim();
-  return trimmed.length > maxLength ? trimmed.substring(0, maxLength) : trimmed;
-};
-
-// Helper function to handle errors
-const handleError = (error, context = 'Operation') => {
-  console.error(`${context} failed:`, error);
-  let message = 'An unexpected error occurred. Please try again.';
-  if (error.response && error.response.data && error.response.data.message) {
-    message = error.response.data.message;
-  } else if (error.message) {
-    message = error.message;
-  }
-  return { message, error };
+const sanitizeInput = (input) => {
+  if (!input) return '';
+  return String(input).replace(/[<>]/g, '').trim();
 };
 
 export default function Settings() {
@@ -65,7 +47,7 @@ export default function Settings() {
         currency: currentUser.currency || 'USD'
       });
     } catch (error) {
-      handleError(error, 'Loading user settings');
+      console.error('Error loading user settings:', error);
     }
   };
 
@@ -74,13 +56,12 @@ export default function Settings() {
     onSuccess: () => {
       loadUser();
       setSuccessMessage('Profile updated successfully!');
-      setErrors({}); // Clear any previous errors
-      setTimeout(() => setSuccessMessage(''), 3000); // Clear success message after 3 seconds
+      setErrors({});
+      setTimeout(() => setSuccessMessage(''), 3000);
     },
     onError: (error) => {
-      const errorInfo = handleError(error, 'Updating profile');
-      setErrors({ submit: errorInfo.message });
-      setSuccessMessage(''); // Ensure success message is cleared on error
+      console.error('Error updating profile:', error);
+      setErrors({ submit: error.message || 'Failed to update profile' });
     }
   });
 
@@ -88,31 +69,21 @@ export default function Settings() {
     const newErrors = {};
     
     if (!profileData.full_name || profileData.full_name.trim().length < 2) {
-      newErrors.full_name = 'Name must be at least 2 characters.';
-    } else if (profileData.full_name.trim().length > 100) {
-      newErrors.full_name = 'Name cannot exceed 100 characters.';
+      newErrors.full_name = 'Name must be at least 2 characters';
     }
     
     if (profileData.country && profileData.country.trim().length < 2) {
-      newErrors.country = 'Please enter a valid country name.';
-    } else if (profileData.country.trim().length > 100) {
-      newErrors.country = 'Country name cannot exceed 100 characters.';
-    }
-
-    if (profileData.state_province && profileData.state_province.trim().length > 100) {
-      newErrors.state_province = 'State/Province name cannot exceed 100 characters.';
+      newErrors.country = 'Please enter a valid country name';
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleProfileUpdate = (e) => {
+  const handleProfileUpdate = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
     
     const sanitizedData = {
       full_name: sanitizeInput(profileData.full_name),
@@ -138,12 +109,10 @@ export default function Settings() {
       
       loadUser();
       setSuccessMessage('🎉 Your 14-day Pro trial has started! Enjoy all premium features.');
-      setTimeout(() => setSuccessMessage(''), 5000); // Clear message after 5 seconds
-      setErrors({}); // Clear any previous errors
+      setTimeout(() => setSuccessMessage(''), 5000);
     } catch (error) {
-      const errorInfo = handleError(error, 'Starting trial');
-      setErrors({ trial: errorInfo.message });
-      setSuccessMessage(''); // Ensure success message is cleared on error
+      console.error('Error starting trial:', error);
+      setErrors({ trial: error.message || 'Failed to start trial' });
     }
   };
 
@@ -234,14 +203,6 @@ export default function Settings() {
                   </div>
                 )}
               </div>
-              {errors.trial && ( // Display trial specific error
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-[12px]">
-                  <p className="text-sm text-red-800 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.trial}
-                  </p>
-                </div>
-              )}
             </div>
 
             {/* Available Plans */}
@@ -423,17 +384,10 @@ export default function Settings() {
                     id="state"
                     value={profileData.state_province}
                     onChange={(e) => setProfileData({ ...profileData, state_province: validateInput(e.target.value, 100) })}
-                    className={`rounded-[12px] ${errors.state_province ? 'border-red-500' : ''}`}
+                    className="rounded-[12px]"
                     placeholder="e.g., California"
                     maxLength={100}
-                    aria-invalid={!!errors.state_province}
                   />
-                  {errors.state_province && (
-                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      {errors.state_province}
-                    </p>
-                  )}
                 </div>
               </div>
               

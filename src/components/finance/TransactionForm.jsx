@@ -4,8 +4,24 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from 'framer-motion';
-import { validateInput, validateAmount, sanitizeInput } from '@/utils/validation';
 import { AlertCircle } from 'lucide-react';
+
+const validateInput = (value, maxLength = 100) => {
+  if (!value) return '';
+  return String(value).trim().slice(0, maxLength);
+};
+
+const validateAmount = (amount) => {
+  const num = parseFloat(amount);
+  return !isNaN(num) && num >= 0 && num <= 999999999;
+};
+
+const sanitizeInput = (input) => {
+  if (!input) return '';
+  return String(input)
+    .replace(/[<>]/g, '')
+    .trim();
+};
 
 export default function TransactionForm({ transaction, onSubmit, onCancel }) {
   const [formData, setFormData] = useState(transaction || {
@@ -70,7 +86,6 @@ export default function TransactionForm({ transaction, onSubmit, onCancel }) {
 
   const handleFieldChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error for this field
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }

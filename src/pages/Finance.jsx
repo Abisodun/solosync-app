@@ -7,7 +7,6 @@ import { AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card } from "@/components/ui/card";
 import { format } from 'date-fns';
-import { handleError } from '@/utils/errorHandler';
 import AIForecast from '../components/finance/AIForecast';
 import TransactionForm from '../components/finance/TransactionForm';
 import TransactionList from '../components/finance/TransactionList';
@@ -27,7 +26,7 @@ export default function Finance() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        handleError(error, 'Loading user');
+        console.error('Error loading user:', error);
       }
     };
     loadUser();
@@ -39,7 +38,7 @@ export default function Finance() {
       try {
         return await base44.entities.Transaction.list('-date', 200);
       } catch (error) {
-        handleError(error, 'Loading transactions');
+        console.error('Error loading transactions:', error);
         return [];
       }
     }
@@ -51,7 +50,7 @@ export default function Finance() {
       try {
         return await base44.entities.Invoice.list('-issue_date', 100);
       } catch (error) {
-        handleError(error, 'Loading invoices');
+        console.error('Error loading invoices:', error);
         return [];
       }
     }
@@ -64,7 +63,8 @@ export default function Finance() {
       resetTransactionForm();
     },
     onError: (error) => {
-      handleError(error, 'Creating transaction');
+      console.error('Error creating transaction:', error);
+      alert('Failed to create transaction. Please try again.');
     }
   });
 
@@ -75,7 +75,8 @@ export default function Finance() {
       resetTransactionForm();
     },
     onError: (error) => {
-      handleError(error, 'Updating transaction');
+      console.error('Error updating transaction:', error);
+      alert('Failed to update transaction. Please try again.');
     }
   });
 
@@ -83,7 +84,8 @@ export default function Finance() {
     mutationFn: (id) => base44.entities.Transaction.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
     onError: (error) => {
-      handleError(error, 'Deleting transaction');
+      console.error('Error deleting transaction:', error);
+      alert('Failed to delete transaction. Please try again.');
     }
   });
 

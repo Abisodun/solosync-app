@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import SubscriptionBanner from './components/subscription/SubscriptionBanner';
-import { handleError } from '@/utils/errorHandler';
 import { differenceInDays, parseISO } from 'date-fns';
 
 const navigation = [
@@ -52,13 +51,12 @@ export default function Layout({ children, currentPageName }) {
             subscription_status: 'expired',
             subscription_tier: 'free'
           });
-          // Reload user data
           const updatedUser = await base44.auth.me();
           setUser(updatedUser);
         }
       }
     } catch (error) {
-      handleError(error, 'Loading user in layout');
+      console.error('Error loading user in layout:', error);
     } finally {
       setLoading(false);
     }
