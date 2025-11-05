@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,21 +6,13 @@ import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import ReactMarkdown from 'react-markdown';
 import { format, addMonths, startOfMonth } from 'date-fns';
-import UpgradeModal from '../subscription/UpgradeModal';
+import { base44 } from '@/api/base44Client';
 
 export default function AIForecast({ transactions, user }) {
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-
-  const hasAccess = user && (user.subscription_tier === 'pro' || user.subscription_tier === 'enterprise');
 
   const generateForecast = async () => {
-    if (!hasAccess) {
-      setShowUpgradeModal(true);
-      return;
-    }
-
     setLoading(true);
     try {
       // Prepare historical data summary
@@ -149,56 +140,6 @@ Format your response in clear sections with headers. Be specific and data-driven
     }
     setLoading(false);
   };
-
-  if (!hasAccess) {
-    return (
-      <>
-        <UpgradeModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          featureName="AI Financial Forecasting"
-        />
-        <Card className="p-6 rounded-[20px]" style={{
-          background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
-          boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)'
-        }}>
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{
-                background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)'
-              }}>
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">AI Financial Forecast</h3>
-                <p className="text-gray-600 mb-4">
-                  Unlock AI-powered predictions, cash flow analysis, and personalized financial recommendations
-                </p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="px-3 py-1 rounded-[8px] bg-purple-100 text-purple-700 text-sm font-medium">
-                    3-Month Predictions
-                  </span>
-                  <span className="px-3 py-1 rounded-[8px] bg-blue-100 text-blue-700 text-sm font-medium">
-                    Cash Flow Alerts
-                  </span>
-                  <span className="px-3 py-1 rounded-[8px] bg-green-100 text-green-700 text-sm font-medium">
-                    Savings Tips
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <Button
-            onClick={() => setShowUpgradeModal(true)}
-            className="mt-4 rounded-[14px] text-white font-semibold"
-            style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
-          >
-            Upgrade to Pro for AI Forecasting
-          </Button>
-        </Card>
-      </>
-    );
-  }
 
   return (
     <div className="space-y-6">
