@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -10,17 +9,17 @@ import {
   DollarSign, 
   Calendar, 
   Heart,
-  Sparkles,
   Menu,
   X,
   LogOut,
   Calculator,
   Users,
-  Zap, // Added Zap icon import
+  Zap,
   Settings as SettingsIcon
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import SubscriptionBanner from './components/subscription/SubscriptionBanner';
+import Logo from './components/landing/Logo';
 import { differenceInDays, parseISO } from 'date-fns';
 
 const navigation = [
@@ -29,7 +28,7 @@ const navigation = [
   { name: 'Goals', icon: Target, page: 'Goals' },
   { name: 'Finance', icon: DollarSign, page: 'Finance' },
   { name: 'Clients', icon: Users, page: 'Clients' },
-  { name: 'Workflows', icon: Zap, page: 'Workflows' }, // New navigation item
+  { name: 'Workflows', icon: Zap, page: 'Workflows' },
   { name: 'Content', icon: Calendar, page: 'Content' },
   { name: 'Habits', icon: Heart, page: 'Habits' },
   { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep', proBadge: true },
@@ -113,16 +112,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-[12px] flex items-center justify-center"
-                style={{
-                  background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
-                  boxShadow: '0 4px 16px rgba(139, 92, 246, 0.3)'
-                }}
-                aria-hidden="true"
-              >
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+              <Logo className="w-10 h-10" />
               <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 SoloSync
               </span>
