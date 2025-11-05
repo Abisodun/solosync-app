@@ -16,7 +16,8 @@ import {
   Calculator,
   Users,
   Zap,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  FolderKanban // Added FolderKanban import
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import SubscriptionBanner from './components/subscription/SubscriptionBanner';
@@ -26,13 +27,14 @@ import { differenceInDays, parseISO } from 'date-fns';
 const navigation = [
   { name: 'Dashboard', icon: LayoutDashboard, page: 'Dashboard' },
   { name: 'Tasks', icon: CheckSquare, page: 'Tasks' },
+  { name: 'Projects', icon: FolderKanban, page: 'Projects' }, // Added Projects item
   { name: 'Goals', icon: Target, page: 'Goals' },
   { name: 'Finance', icon: DollarSign, page: 'Finance' },
   { name: 'Clients', icon: Users, page: 'Clients' },
   { name: 'Workflows', icon: Zap, page: 'Workflows' },
   { name: 'Content', icon: Calendar, page: 'Content' },
   { name: 'Habits', icon: Heart, page: 'Habits' },
-  { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep' }, // proBadge: true removed
+  { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep' },
   { name: 'Settings', icon: SettingsIcon, page: 'Settings' }
 ];
 

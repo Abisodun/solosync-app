@@ -10,6 +10,7 @@ import Clients from './pages/Clients';
 import Workflows from './pages/Workflows';
 import Content from './pages/Content';
 import Habits from './pages/Habits';
+import Projects from './pages/Projects';
 import Layout from './Layout.jsx';
 
 
@@ -26,6 +27,7 @@ export const PAGES = {
     "Workflows": Workflows,
     "Content": Content,
     "Habits": Habits,
+    "Projects": Projects,
 }
 
 export const pagesConfig = {
