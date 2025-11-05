@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -31,7 +32,7 @@ const navigation = [
   { name: 'Workflows', icon: Zap, page: 'Workflows' },
   { name: 'Content', icon: Calendar, page: 'Content' },
   { name: 'Habits', icon: Heart, page: 'Habits' },
-  { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep', proBadge: true },
+  { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep' }, // proBadge: true removed
   { name: 'Settings', icon: SettingsIcon, page: 'Settings' }
 ];
 
