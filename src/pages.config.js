@@ -8,6 +8,8 @@ import TaxPrep from './pages/TaxPrep';
 import Settings from './pages/Settings';
 import Clients from './pages/Clients';
 import Workflows from './pages/Workflows';
+import Content from './pages/Content';
+import Habits from './pages/Habits';
 import Layout from './Layout.jsx';
 
 
@@ -22,6 +24,8 @@ export const PAGES = {
     "Settings": Settings,
     "Clients": Clients,
     "Workflows": Workflows,
+    "Content": Content,
+    "Habits": Habits,
 }
 
 export const pagesConfig = {
