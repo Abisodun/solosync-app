@@ -85,7 +85,7 @@ export default function Onboarding() {
     try {
       // Update user profile
       await base44.auth.updateMe({
-        role: selectedRole,
+        user_type: selectedRole,
         workspace_style: selectedStyle,
         onboarded: true
       });

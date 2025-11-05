@@ -79,7 +79,7 @@ export default function Dashboard() {
       ).length;
 
       const prompt = `You are a productivity coach. Based on this data:
-- User role: ${user.role}
+- User type: ${user.user_type || 'professional'}
 - Urgent tasks: ${urgentTasks}
 - Tasks completed today: ${completedToday}
 - Total active tasks: ${tasks.filter(t => t.status !== 'done').length}
@@ -164,7 +164,7 @@ Provide ONE concise, actionable productivity tip (max 2 sentences) tailored to t
             Welcome back, {user.full_name || 'there'}! 👋
           </h2>
           <p className="text-lg text-gray-600">
-            {roleInfo[user.role]?.emoji} {roleInfo[user.role]?.title} • Here's your workspace overview
+            {roleInfo[user.user_type]?.emoji} {roleInfo[user.user_type]?.title} • Here's your workspace overview
           </p>
         </motion.div>
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -434,8 +435,8 @@ export default function Settings() {
                 <div className="font-medium text-gray-800">{user.email}</div>
               </div>
               <div>
-                <span className="text-gray-500">Role:</span>
-                <div className="font-medium text-gray-800 capitalize">{user.role}</div>
+                <span className="text-gray-500">Type:</span>
+                <div className="font-medium text-gray-800 capitalize">{user.user_type || 'Professional'}</div>
               </div>
               <div>
                 <span className="text-gray-500">Member since:</span>
