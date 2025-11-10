@@ -74,34 +74,52 @@ export default function Layout({ children, currentPageName }) {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)' }}>
+        <div style={{ width: '48px', height: '48px', border: '2px solid #9333ea', borderTop: '2px solid transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
       </div>
     );
   }
 
+  // ABSOLUTE SIMPLEST SIDEBAR - NO FLEX, JUST FIXED POSITIONING
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', overflow: 'hidden', background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)' }}>
-      {/* Sidebar - Always Visible */}
+    <>
+      {/* DEBUG: Visible marker at top of page */}
       <div style={{ 
-        width: '256px', 
-        minWidth: '256px',
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        background: 'red', 
+        color: 'white', 
+        padding: '4px', 
+        textAlign: 'center', 
+        zIndex: 9999,
+        fontSize: '12px'
+      }}>
+        🔴 LAYOUT IS LOADED - Page: {currentPageName} - User: {user?.email}
+      </div>
+
+      {/* SIDEBAR - Fixed Position */}
+      <div style={{
+        position: 'fixed',
+        top: '24px', // Below debug bar
+        left: 0,
+        bottom: 0,
+        width: '256px',
         backgroundColor: '#0f172a',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        zIndex: 10
+        zIndex: 1000,
+        overflowY: 'auto',
+        boxShadow: '2px 0 10px rgba(0,0,0,0.1)'
       }}>
         {/* Logo */}
         <div style={{ padding: '24px', borderBottom: '1px solid #334155' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Logo className="w-10 h-10" />
-            <span style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>SoloSync</span>
+          <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold' }}>
+            🔵 SoloSync
           </div>
         </div>
 
         {/* Navigation */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px' }}>
+        <div style={{ padding: '16px 12px' }}>
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = currentPageName === item.page;
@@ -110,113 +128,78 @@ export default function Layout({ children, currentPageName }) {
                 key={item.name}
                 to={createPageUrl(item.page)}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
+                  display: 'block',
                   padding: '12px 16px',
                   marginBottom: '4px',
                   borderRadius: '12px',
                   backgroundColor: isActive ? '#9333ea' : 'transparent',
-                  color: isActive ? 'white' : '#d1d5db',
+                  color: 'white',
                   textDecoration: 'none',
-                  transition: 'all 0.2s',
-                  fontWeight: 500
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = '#1e293b';
-                    e.currentTarget.style.color = 'white';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#d1d5db';
-                  }
+                  fontSize: '14px',
+                  fontWeight: isActive ? 'bold' : 'normal'
                 }}
               >
-                <Icon style={{ width: '20px', height: '20px' }} />
-                <span>{item.name}</span>
+                <Icon style={{ width: '16px', height: '16px', display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
+                {item.name}
               </Link>
             );
           })}
         </div>
 
-        {/* Bottom Actions */}
-        <div style={{ padding: '16px', borderTop: '1px solid #334155' }}>
+        {/* Settings & Logout */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px', borderTop: '1px solid #334155', backgroundColor: '#0f172a' }}>
           <Link
             to={createPageUrl('Settings')}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
+              display: 'block',
               padding: '12px 16px',
               marginBottom: '8px',
               borderRadius: '12px',
               backgroundColor: currentPageName === 'Settings' ? '#9333ea' : 'transparent',
-              color: currentPageName === 'Settings' ? 'white' : '#d1d5db',
+              color: 'white',
               textDecoration: 'none',
-              transition: 'all 0.2s',
-              fontWeight: 500
-            }}
-            onMouseEnter={(e) => {
-              if (currentPageName !== 'Settings') {
-                e.currentTarget.style.backgroundColor = '#1e293b';
-                e.currentTarget.style.color = 'white';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (currentPageName !== 'Settings') {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#d1d5db';
-              }
+              fontSize: '14px'
             }}
           >
-            <SettingsIcon style={{ width: '20px', height: '20px' }} />
-            <span>Settings</span>
+            <SettingsIcon style={{ width: '16px', height: '16px', display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
+            Settings
           </Link>
           <button
             onClick={() => base44.auth.logout()}
             style={{
               width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
+              display: 'block',
               padding: '12px 16px',
               borderRadius: '12px',
               backgroundColor: 'transparent',
-              color: '#d1d5db',
+              color: 'white',
               border: 'none',
               cursor: 'pointer',
-              transition: 'all 0.2s',
-              fontWeight: 500
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#1e293b';
-              e.currentTarget.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#d1d5db';
+              fontSize: '14px',
+              textAlign: 'left'
             }}
           >
-            <LogOut style={{ width: '20px', height: '20px' }} />
-            <span>Sign Out</span>
+            <LogOut style={{ width: '16px', height: '16px', display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
+            Sign Out
           </button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px' }}>
-          {showBanner && (
-            <div style={{ marginBottom: '24px' }}>
-              <SubscriptionBanner user={user} onDismiss={() => setShowBanner(false)} />
-            </div>
-          )}
-          {children}
-        </div>
+      {/* MAIN CONTENT - With left margin for sidebar */}
+      <div style={{
+        marginLeft: '256px',
+        marginTop: '24px', // Below debug bar
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
+        padding: '32px 24px'
+      }}>
+        {showBanner && (
+          <div style={{ marginBottom: '24px' }}>
+            <SubscriptionBanner user={user} onDismiss={() => setShowBanner(false)} />
+          </div>
+        )}
+        {children}
       </div>
-    </div>
+    </>
   );
 }
