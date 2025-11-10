@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, Download, Lightbulb, ArrowRight, ArrowLeft, Receipt, CircleDollarSign, CheckCircle2, Info, AlertTriangle, Sparkles, Calculator } from 'lucide-react';
 import { format, parseISO, getYear } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
+import Sidebar from '../components/common/Sidebar';
 
 export default function TaxPrep() {
   const [user, setUser] = useState(null);
@@ -442,86 +443,95 @@ Start with a clear disclaimer that this is general information only, not tax adv
   const CurrentStepComponent = steps[currentStep].component;
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Tax Preparation Tools</h1>
-          <p className="text-gray-600 mt-1">Organize your finances for tax season</p>
-        </div>
-        <Select value={String(selectedYear)} onValueChange={(value) => setSelectedYear(Number(value))}>
-          <SelectTrigger className="w-[180px] rounded-[12px]">
-            <SelectValue placeholder="Select Year" />
-          </SelectTrigger>
-          <SelectContent>
-            {years.map(year => (
-              <SelectItem key={year} value={String(year)}>Tax Year {year}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1">
-          <Card className="p-4 rounded-[20px] sticky top-24" style={{ background: 'rgba(255, 255, 255, 0.95)' }}>
-            <h3 className="font-bold text-gray-800 mb-4">Preparation Steps</h3>
-            <nav className="space-y-2">
-              {steps.map((step, index) => {
-                const Icon = step.icon;
-                return (
-                  <Button
-                    key={index}
-                    variant="ghost"
-                    onClick={() => setCurrentStep(index)}
-                    className={`w-full justify-start rounded-[12px] text-left ${
-                      currentStep === index 
-                        ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span className="text-sm">{step.title}</span>
-                  </Button>
-                );
-              })}
-            </nav>
-          </Card>
+    <>
+      <Sidebar currentPage="TaxPrep" />
+      
+      <div style={{
+        marginLeft: '260px',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
+        padding: '32px 24px'
+      }}>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Tax Preparation Tools</h1>
+            <p className="text-gray-600 mt-1">Organize your finances for tax season</p>
+          </div>
+          <Select value={String(selectedYear)} onValueChange={(value) => setSelectedYear(Number(value))}>
+            <SelectTrigger className="w-[180px] rounded-[12px]">
+              <SelectValue placeholder="Select Year" />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map(year => (
+                <SelectItem key={year} value={String(year)}>Tax Year {year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <div className="lg:col-span-3">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card className="p-8 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)' }}>
-              <CurrentStepComponent />
-              
-              <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
-                {currentStep > 0 && (
-                  <Button 
-                    onClick={() => setCurrentStep(currentStep - 1)} 
-                    variant="outline"
-                    className="rounded-[12px]"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Previous
-                  </Button>
-                )}
-                {currentStep < steps.length - 1 && (
-                  <Button 
-                    onClick={() => setCurrentStep(currentStep + 1)} 
-                    className="ml-auto rounded-[12px] text-white"
-                    style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
-                  >
-                    Next <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                )}
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-1">
+            <Card className="p-4 rounded-[20px] sticky top-24" style={{ background: 'rgba(255, 255, 255, 0.95)' }}>
+              <h3 className="font-bold text-gray-800 mb-4">Preparation Steps</h3>
+              <nav className="space-y-2">
+                {steps.map((step, index) => {
+                  const Icon = step.icon;
+                  return (
+                    <Button
+                      key={index}
+                      variant="ghost"
+                      onClick={() => setCurrentStep(index)}
+                      className={`w-full justify-start rounded-[12px] text-left ${
+                        currentStep === index 
+                          ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' 
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span className="text-sm">{step.title}</span>
+                    </Button>
+                  );
+                })}
+              </nav>
             </Card>
-          </motion.div>
+          </div>
+
+          <div className="lg:col-span-3">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="p-8 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)' }}>
+                <CurrentStepComponent />
+                
+                <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+                  {currentStep > 0 && (
+                    <Button 
+                      onClick={() => setCurrentStep(currentStep - 1)} 
+                      variant="outline"
+                      className="rounded-[12px]"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" /> Previous
+                    </Button>
+                  )}
+                  {currentStep < steps.length - 1 && (
+                    <Button 
+                      onClick={() => setCurrentStep(currentStep + 1)} 
+                      className="ml-auto rounded-[12px] text-white"
+                      style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+                    >
+                      Next <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            </motion.div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
