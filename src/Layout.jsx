@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -91,9 +92,9 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF]">
       {/* Left Sidebar Navigation */}
-      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-slate-900 to-slate-800 z-50">
+      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-slate-900 to-slate-800 z-50 flex flex-col">
         {/* Logo Section */}
-        <div className="p-6 border-b border-slate-700">
+        <div className="p-6 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center gap-3">
             <Logo className="w-10 h-10" />
             <span className="text-xl font-bold text-white">
@@ -128,7 +129,7 @@ export default function Layout({ children, currentPageName }) {
         </nav>
 
         {/* User Section at Bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700 bg-slate-900">
+        <div className="p-4 border-t border-slate-700 bg-slate-900 flex-shrink-0">
           <div className="space-y-2">
             <Link
               to={createPageUrl('Settings')}
