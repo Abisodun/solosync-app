@@ -14,7 +14,8 @@ import {
   Users,
   Zap,
   Settings as SettingsIcon,
-  FolderKanban
+  FolderKanban,
+  MessageSquare
 } from 'lucide-react';
 import Logo from '../landing/Logo';
 
@@ -28,7 +29,8 @@ const navigation = [
   { name: 'Workflows', icon: Zap, page: 'Workflows' },
   { name: 'Content', icon: Calendar, page: 'Content' },
   { name: 'Habits', icon: Heart, page: 'Habits' },
-  { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep' }
+  { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep' },
+  { name: 'Feedback', icon: MessageSquare, page: 'Feedback' }
 ];
 
 export default function Sidebar({ currentPage }) {
