@@ -69,7 +69,7 @@ export default function Layout({ children, currentPageName }) {
 
   // Don't show layout on landing or onboarding pages
   if (currentPageName === 'Landing' || currentPageName === 'Onboarding') {
-    return children;
+    return <>{children}</>;
   }
 
   if (loading || !user) {
@@ -81,19 +81,27 @@ export default function Layout({ children, currentPageName }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF]">
-      {/* Sidebar */}
-      <div className="w-64 bg-slate-900 flex flex-col">
+    <div style={{ display: 'flex', minHeight: '100vh', overflow: 'hidden', background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)' }}>
+      {/* Sidebar - Always Visible */}
+      <div style={{ 
+        width: '256px', 
+        minWidth: '256px',
+        backgroundColor: '#0f172a',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+        zIndex: 10
+      }}>
         {/* Logo */}
-        <div className="p-6 border-b border-slate-700">
-          <div className="flex items-center gap-3">
+        <div style={{ padding: '24px', borderBottom: '1px solid #334155' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Logo className="w-10 h-10" />
-            <span className="text-xl font-bold text-white">SoloSync</span>
+            <span style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>SoloSync</span>
           </div>
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto py-4 px-3">
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px' }}>
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = currentPageName === item.page;
@@ -101,47 +109,108 @@ export default function Layout({ children, currentPageName }) {
               <Link
                 key={item.name}
                 to={createPageUrl(item.page)}
-                className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-xl transition-all ${
-                  isActive
-                    ? 'bg-purple-600 text-white'
-                    : 'text-gray-300 hover:bg-slate-800 hover:text-white'
-                }`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  marginBottom: '4px',
+                  borderRadius: '12px',
+                  backgroundColor: isActive ? '#9333ea' : 'transparent',
+                  color: isActive ? 'white' : '#d1d5db',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s',
+                  fontWeight: 500
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = '#1e293b';
+                    e.currentTarget.style.color = 'white';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = '#d1d5db';
+                  }
+                }}
               >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{item.name}</span>
+                <Icon style={{ width: '20px', height: '20px' }} />
+                <span>{item.name}</span>
               </Link>
             );
           })}
         </div>
 
         {/* Bottom Actions */}
-        <div className="p-4 border-t border-slate-700">
+        <div style={{ padding: '16px', borderTop: '1px solid #334155' }}>
           <Link
             to={createPageUrl('Settings')}
-            className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl transition-all ${
-              currentPageName === 'Settings'
-                ? 'bg-purple-600 text-white'
-                : 'text-gray-300 hover:bg-slate-800 hover:text-white'
-            }`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              marginBottom: '8px',
+              borderRadius: '12px',
+              backgroundColor: currentPageName === 'Settings' ? '#9333ea' : 'transparent',
+              color: currentPageName === 'Settings' ? 'white' : '#d1d5db',
+              textDecoration: 'none',
+              transition: 'all 0.2s',
+              fontWeight: 500
+            }}
+            onMouseEnter={(e) => {
+              if (currentPageName !== 'Settings') {
+                e.currentTarget.style.backgroundColor = '#1e293b';
+                e.currentTarget.style.color = 'white';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (currentPageName !== 'Settings') {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#d1d5db';
+              }
+            }}
           >
-            <SettingsIcon className="w-5 h-5" />
-            <span className="font-medium">Settings</span>
+            <SettingsIcon style={{ width: '20px', height: '20px' }} />
+            <span>Settings</span>
           </Link>
           <button
             onClick={() => base44.auth.logout()}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-slate-800 hover:text-white transition-all"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              borderRadius: '12px',
+              backgroundColor: 'transparent',
+              color: '#d1d5db',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              fontWeight: 500
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1e293b';
+              e.currentTarget.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#d1d5db';
+            }}
           >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">Sign Out</span>
+            <LogOut style={{ width: '20px', height: '20px' }} />
+            <span>Sign Out</span>
           </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-6 py-8">
+      <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px' }}>
           {showBanner && (
-            <div className="mb-6">
+            <div style={{ marginBottom: '24px' }}>
               <SubscriptionBanner user={user} onDismiss={() => setShowBanner(false)} />
             </div>
           )}
