@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
+import ReceiptUpload from './ReceiptUpload';
 
 const validateInput = (value, maxLength = 100) => {
   if (!value) return '';
@@ -30,7 +32,10 @@ export default function TransactionForm({ transaction, onSubmit, onCancel }) {
     description: '',
     category: '',
     date: new Date().toISOString().split('T')[0],
-    client_name: ''
+    client_name: '',
+    receipt_url: '',
+    is_tax_deductible: false,
+    tax_category: ''
   });
   
   const [errors, setErrors] = useState({});
@@ -73,7 +78,10 @@ export default function TransactionForm({ transaction, onSubmit, onCancel }) {
         description: sanitizeInput(formData.description),
         category: sanitizeInput(formData.category),
         date: formData.date,
-        client_name: sanitizeInput(formData.client_name)
+        client_name: sanitizeInput(formData.client_name),
+        receipt_url: formData.receipt_url,
+        is_tax_deductible: formData.is_tax_deductible,
+        tax_category: sanitizeInput(formData.tax_category)
       };
       
       await onSubmit(sanitizedData);
@@ -209,6 +217,38 @@ export default function TransactionForm({ transaction, onSubmit, onCancel }) {
               />
             </div>
           </div>
+
+          {/* Receipt Upload */}
+          {formData.type === 'expense' && (
+            <ReceiptUpload
+              onUploadComplete={(url) => handleFieldChange('receipt_url', url)}
+            />
+          )}
+
+          {/* Tax Deductible */}
+          {formData.type === 'expense' && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="tax-deductible"
+                  checked={formData.is_tax_deductible}
+                  onCheckedChange={(checked) => handleFieldChange('is_tax_deductible', checked)}
+                />
+                <label htmlFor="tax-deductible" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  Tax Deductible Expense
+                </label>
+              </div>
+
+              {formData.is_tax_deductible && (
+                <Input
+                  placeholder="Tax category (e.g., Business Supplies, Travel)"
+                  value={formData.tax_category}
+                  onChange={(e) => handleFieldChange('tax_category', validateInput(e.target.value, 100))}
+                  className="rounded-[12px]"
+                />
+              )}
+            </div>
+          )}
           
           {errors.submit && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-[12px]">

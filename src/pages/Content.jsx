@@ -8,9 +8,11 @@ import { Plus, Calendar as CalendarIcon, Instagram, Youtube, Twitter, Linkedin, 
 import { motion } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import Sidebar from '../components/common/Sidebar';
+import AIPublishingTips from '../components/content/AIPublishingTips';
 
 export default function Content() {
   const [showForm, setShowForm] = useState(false);
+  const [selectedContent, setSelectedContent] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: contentItems = [], isLoading } = useQuery({
@@ -107,37 +109,50 @@ export default function Content() {
             <div className="space-y-4">
               {contentItems.map((item) => {
                 const ChannelIcon = channelIcons[item.channel] || CalendarIcon;
+                const isSelected = selectedContent?.id === item.id;
+                
                 return (
-                  <div key={item.id} className="p-4 rounded-[16px] bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4 flex-1">
-                        <div className="w-10 h-10 rounded-[12px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}>
-                          <ChannelIcon className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-800 mb-1">{item.title}</h3>
-                          {item.description && <p className="text-sm text-gray-600 mb-2">{item.description}</p>}
-                          <div className="flex items-center gap-3 text-sm text-gray-500">
-                            <span className="capitalize">{item.type.replace('_', ' ')}</span>
-                            {item.scheduled_date && (
-                              <>
-                                <span>•</span>
-                                <span>{format(parseISO(item.scheduled_date), 'MMM dd, yyyy')}</span>
-                              </>
-                            )}
-                            {item.channel && (
-                              <>
-                                <span>•</span>
-                                <span className="capitalize">{item.channel}</span>
-                              </>
-                            )}
+                  <div key={item.id}>
+                    <div 
+                      className="p-4 rounded-[16px] bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                      style={{ border: isSelected ? '2px solid #A78BFA' : 'none' }}
+                      onClick={() => setSelectedContent(isSelected ? null : item)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className="w-10 h-10 rounded-[12px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}>
+                            <ChannelIcon className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-800 mb-1">{item.title}</h3>
+                            {item.description && <p className="text-sm text-gray-600 mb-2">{item.description}</p>}
+                            <div className="flex items-center gap-3 text-sm text-gray-500">
+                              <span className="capitalize">{item.type.replace('_', ' ')}</span>
+                              {item.scheduled_date && (
+                                <>
+                                  <span>•</span>
+                                  <span>{format(parseISO(item.scheduled_date), 'MMM dd, yyyy')}</span>
+                                </>
+                              )}
+                              {item.channel && (
+                                <>
+                                  <span>•</span>
+                                  <span className="capitalize">{item.channel}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        <span className={`px-3 py-1 rounded-[8px] text-xs font-semibold ${statusColors[item.status]}`}>
+                          {item.status}
+                        </span>
                       </div>
-                      <span className={`px-3 py-1 rounded-[8px] text-xs font-semibold ${statusColors[item.status]}`}>
-                        {item.status}
-                      </span>
                     </div>
+
+                    {/* AI Publishing Tips */}
+                    {isSelected && (
+                      <AIPublishingTips contentItem={item} />
+                    )}
                   </div>
                 );
               })}

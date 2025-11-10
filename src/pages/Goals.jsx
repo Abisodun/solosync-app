@@ -11,6 +11,7 @@ import { Plus, Target, Trophy, Pause, Play, CheckCircle2, Edit2, Trash2 } from '
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import Sidebar from '../components/common/Sidebar';
+import AIGoalBreakdown from '../components/goals/AIGoalBreakdown';
 
 export default function Goals() {
   const [showForm, setShowForm] = useState(false);
@@ -25,6 +26,7 @@ export default function Goals() {
     milestones: []
   });
   const [newMilestone, setNewMilestone] = useState('');
+  const [selectedGoal, setSelectedGoal] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -74,6 +76,7 @@ export default function Goals() {
     setEditingGoal(goal);
     setFormData({ ...goal });
     setShowForm(true);
+    setSelectedGoal(null); // Deselect any goal when editing
   };
 
   const addMilestone = () => {
@@ -120,7 +123,7 @@ export default function Goals() {
             <p className="text-gray-600 mt-1">Set and achieve your goals</p>
           </div>
           <Button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => { setShowForm(!showForm); setSelectedGoal(null); }}
             className="rounded-[14px] text-white"
             style={{ background: 'linear-gradient(135deg, #F472B6 0%, #EC4899 100%)' }}
           >
@@ -225,54 +228,71 @@ export default function Goals() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {activeGoals.map((goal) => {
                 const colors = categoryColors[goal.category];
+                const isSelected = selectedGoal?.id === goal.id;
+                
                 return (
-                  <motion.div key={goal.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                    <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0" style={{ background: colors.gradient }}>
-                            <Target className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-gray-800 text-lg">{goal.title}</h3>
-                            {goal.description && <p className="text-sm text-gray-600 mt-1">{goal.description}</p>}
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className={`px-2 py-1 rounded-[8px] text-xs font-medium ${colors.bg} ${colors.text}`}>{goal.category}</span>
-                              {goal.target_date && <span className="text-xs text-gray-500">Due: {format(new Date(goal.target_date), 'MMM d, yyyy')}</span>}
+                  <div key={goal.id}>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                      <Card 
+                        className="p-6 rounded-[20px] cursor-pointer" 
+                        style={{ 
+                          background: 'rgba(255, 255, 255, 0.95)', 
+                          boxShadow: isSelected ? '0 8px 32px rgba(167, 139, 250, 0.3)' : '0 8px 32px rgba(167, 139, 250, 0.15)',
+                          border: isSelected ? '2px solid #A78BFA' : 'none'
+                        }}
+                        onClick={() => setSelectedGoal(isSelected ? null : goal)}
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-start gap-3 flex-1">
+                            <div className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0" style={{ background: colors.gradient }}>
+                              <Target className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-bold text-gray-800 text-lg">{goal.title}</h3>
+                              {goal.description && <p className="text-sm text-gray-600 mt-1">{goal.description}</p>}
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className={`px-2 py-1 rounded-[8px] text-xs font-medium ${colors.bg} ${colors.text}`}>{goal.category}</span>
+                                {goal.target_date && <span className="text-xs text-gray-500">Due: {format(new Date(goal.target_date), 'MMM d, yyyy')}</span>}
+                              </div>
                             </div>
                           </div>
+                          <div className="flex gap-2">
+                            <button onClick={(e) => { e.stopPropagation(); handleEdit(goal); }} className="p-2 hover:bg-gray-100 rounded-[10px]">
+                              <Edit2 className="w-4 h-4 text-gray-600" />
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(goal.id); }} className="p-2 hover:bg-gray-100 rounded-[10px]">
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => handleEdit(goal)} className="p-2 hover:bg-gray-100 rounded-[10px]">
-                            <Edit2 className="w-4 h-4 text-gray-600" />
-                          </button>
-                          <button onClick={() => deleteMutation.mutate(goal.id)} className="p-2 hover:bg-gray-100 rounded-[10px]">
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </button>
+                        <div className="mb-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm text-gray-600">Progress</span>
+                            <span className="text-sm font-bold text-purple-600">{goal.progress}%</span>
+                          </div>
+                          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full transition-all" style={{ width: `${goal.progress}%`, background: colors.gradient }} />
+                          </div>
                         </div>
-                      </div>
-                      <div className="mb-4">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm text-gray-600">Progress</span>
-                          <span className="text-sm font-bold text-purple-600">{goal.progress}%</span>
-                        </div>
-                        <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-all" style={{ width: `${goal.progress}%`, background: colors.gradient }} />
-                        </div>
-                      </div>
-                      {goal.milestones && goal.milestones.length > 0 && (
-                        <div className="space-y-2">
-                          <span className="text-sm font-semibold text-gray-700">Milestones</span>
-                          {goal.milestones.map((m, i) => (
-                            <div key={i} className="flex items-center gap-2 text-sm">
-                              {m.completed ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
-                              <span className={m.completed ? 'line-through text-gray-500' : 'text-gray-700'}>{m.title}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </Card>
-                  </motion.div>
+                        {goal.milestones && goal.milestones.length > 0 && (
+                          <div className="space-y-2">
+                            <span className="text-sm font-semibold text-gray-700">Milestones</span>
+                            {goal.milestones.map((m, i) => (
+                              <div key={i} className="flex items-center gap-2 text-sm">
+                                {m.completed ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
+                                <span className={m.completed ? 'line-through text-gray-500' : 'text-gray-700'}>{m.title}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </Card>
+                    </motion.div>
+
+                    {/* AI Goal Breakdown */}
+                    {isSelected && (
+                      <AIGoalBreakdown goal={goal} />
+                    )}
+                  </div>
                 );
               })}
             </div>
