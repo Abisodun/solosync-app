@@ -21,6 +21,226 @@ const sanitizeInput = (input) => {
   return String(input).replace(/[<>]/g, '').trim();
 };
 
+const COUNTRIES = [
+  { name: 'Afghanistan', currency: 'AFN' },
+  { name: 'Albania', currency: 'ALL' },
+  { name: 'Algeria', currency: 'DZD' },
+  { name: 'Andorra', currency: 'EUR' },
+  { name: 'Angola', currency: 'AOA' },
+  { name: 'Argentina', currency: 'ARS' },
+  { name: 'Armenia', currency: 'AMD' },
+  { name: 'Australia', currency: 'AUD' },
+  { name: 'Austria', currency: 'EUR' },
+  { name: 'Azerbaijan', currency: 'AZN' },
+  { name: 'Bahamas', currency: 'BSD' },
+  { name: 'Bahrain', currency: 'BHD' },
+  { name: 'Bangladesh', currency: 'BDT' },
+  { name: 'Barbados', currency: 'BBD' },
+  { name: 'Belarus', currency: 'BYN' },
+  { name: 'Belgium', currency: 'EUR' },
+  { name: 'Belize', currency: 'BZD' },
+  { name: 'Benin', currency: 'XOF' },
+  { name: 'Bhutan', currency: 'BTN' },
+  { name: 'Bolivia', currency: 'BOB' },
+  { name: 'Bosnia and Herzegovina', currency: 'BAM' },
+  { name: 'Botswana', currency: 'BWP' },
+  { name: 'Brazil', currency: 'BRL' },
+  { name: 'Brunei', currency: 'BND' },
+  { name: 'Bulgaria', currency: 'BGN' },
+  { name: 'Burkina Faso', currency: 'XOF' },
+  { name: 'Burundi', currency: 'BIF' },
+  { name: 'Cambodia', currency: 'KHR' },
+  { name: 'Cameroon', currency: 'XAF' },
+  { name: 'Canada', currency: 'CAD' },
+  { name: 'Cape Verde', currency: 'CVE' },
+  { name: 'Central African Republic', currency: 'XAF' },
+  { name: 'Chad', currency: 'XAF' },
+  { name: 'Chile', currency: 'CLP' },
+  { name: 'China', currency: 'CNY' },
+  { name: 'Colombia', currency: 'COP' },
+  { name: 'Comoros', currency: 'KMF' },
+  { name: 'Congo', currency: 'XAF' },
+  { name: 'Costa Rica', currency: 'CRC' },
+  { name: 'Croatia', currency: 'EUR' },
+  { name: 'Cuba', currency: 'CUP' },
+  { name: 'Cyprus', currency: 'EUR' },
+  { name: 'Czech Republic', currency: 'CZK' },
+  { name: 'Denmark', currency: 'DKK' },
+  { name: 'Djibouti', currency: 'DJF' },
+  { name: 'Dominica', currency: 'XCD' },
+  { name: 'Dominican Republic', currency: 'DOP' },
+  { name: 'Ecuador', currency: 'USD' },
+  { name: 'Egypt', currency: 'EGP' },
+  { name: 'El Salvador', currency: 'USD' },
+  { name: 'Equatorial Guinea', currency: 'XAF' },
+  { name: 'Eritrea', currency: 'ERN' },
+  { name: 'Estonia', currency: 'EUR' },
+  { name: 'Eswatini', currency: 'SZL' },
+  { name: 'Ethiopia', currency: 'ETB' },
+  { name: 'Fiji', currency: 'FJD' },
+  { name: 'Finland', currency: 'EUR' },
+  { name: 'France', currency: 'EUR' },
+  { name: 'Gabon', currency: 'XAF' },
+  { name: 'Gambia', currency: 'GMD' },
+  { name: 'Georgia', currency: 'GEL' },
+  { name: 'Germany', currency: 'EUR' },
+  { name: 'Ghana', currency: 'GHS' },
+  { name: 'Greece', currency: 'EUR' },
+  { name: 'Grenada', currency: 'XCD' },
+  { name: 'Guatemala', currency: 'GTQ' },
+  { name: 'Guinea', currency: 'GNF' },
+  { name: 'Guinea-Bissau', currency: 'XOF' },
+  { name: 'Guyana', currency: 'GYD' },
+  { name: 'Haiti', currency: 'HTG' },
+  { name: 'Honduras', currency: 'HNL' },
+  { name: 'Hungary', currency: 'HUF' },
+  { name: 'Iceland', currency: 'ISK' },
+  { name: 'India', currency: 'INR' },
+  { name: 'Indonesia', currency: 'IDR' },
+  { name: 'Iran', currency: 'IRR' },
+  { name: 'Iraq', currency: 'IQD' },
+  { name: 'Ireland', currency: 'EUR' },
+  { name: 'Israel', currency: 'ILS' },
+  { name: 'Italy', currency: 'EUR' },
+  { name: 'Jamaica', currency: 'JMD' },
+  { name: 'Japan', currency: 'JPY' },
+  { name: 'Jordan', currency: 'JOD' },
+  { name: 'Kazakhstan', currency: 'KZT' },
+  { name: 'Kenya', currency: 'KES' },
+  { name: 'Kiribati', currency: 'AUD' },
+  { name: 'Kuwait', currency: 'KWD' },
+  { name: 'Kyrgyzstan', currency: 'KGS' },
+  { name: 'Laos', currency: 'LAK' },
+  { name: 'Latvia', currency: 'EUR' },
+  { name: 'Lebanon', currency: 'LBP' },
+  { name: 'Lesotho', currency: 'LSL' },
+  { name: 'Liberia', currency: 'LRD' },
+  { name: 'Libya', currency: 'LYD' },
+  { name: 'Liechtenstein', currency: 'CHF' },
+  { name: 'Lithuania', currency: 'EUR' },
+  { name: 'Luxembourg', currency: 'EUR' },
+  { name: 'Madagascar', currency: 'MGA' },
+  { name: 'Malawi', currency: 'MWK' },
+  { name: 'Malaysia', currency: 'MYR' },
+  { name: 'Maldives', currency: 'MVR' },
+  { name: 'Mali', currency: 'XOF' },
+  { name: 'Malta', currency: 'EUR' },
+  { name: 'Marshall Islands', currency: 'USD' },
+  { name: 'Mauritania', currency: 'MRU' },
+  { name: 'Mauritius', currency: 'MUR' },
+  { name: 'Mexico', currency: 'MXN' },
+  { name: 'Micronesia', currency: 'USD' },
+  { name: 'Moldova', currency: 'MDL' },
+  { name: 'Monaco', currency: 'EUR' },
+  { name: 'Mongolia', currency: 'MNT' },
+  { name: 'Montenegro', currency: 'EUR' },
+  { name: 'Morocco', currency: 'MAD' },
+  { name: 'Mozambique', currency: 'MZN' },
+  { name: 'Myanmar', currency: 'MMK' },
+  { name: 'Namibia', currency: 'NAD' },
+  { name: 'Nauru', currency: 'AUD' },
+  { name: 'Nepal', currency: 'NPR' },
+  { name: 'Netherlands', currency: 'EUR' },
+  { name: 'New Zealand', currency: 'NZD' },
+  { name: 'Nicaragua', currency: 'NIO' },
+  { name: 'Niger', currency: 'XOF' },
+  { name: 'Nigeria', currency: 'NGN' },
+  { name: 'North Korea', currency: 'KPW' },
+  { name: 'North Macedonia', currency: 'MKD' },
+  { name: 'Norway', currency: 'NOK' },
+  { name: 'Oman', currency: 'OMR' },
+  { name: 'Pakistan', currency: 'PKR' },
+  { name: 'Palau', currency: 'USD' },
+  { name: 'Palestine', currency: 'ILS' },
+  { name: 'Panama', currency: 'PAB' },
+  { name: 'Papua New Guinea', currency: 'PGK' },
+  { name: 'Paraguay', currency: 'PYG' },
+  { name: 'Peru', currency: 'PEN' },
+  { name: 'Philippines', currency: 'PHP' },
+  { name: 'Poland', currency: 'PLN' },
+  { name: 'Portugal', currency: 'EUR' },
+  { name: 'Qatar', currency: 'QAR' },
+  { name: 'Romania', currency: 'RON' },
+  { name: 'Russia', currency: 'RUB' },
+  { name: 'Rwanda', currency: 'RWF' },
+  { name: 'Saint Kitts and Nevis', currency: 'XCD' },
+  { name: 'Saint Lucia', currency: 'XCD' },
+  { name: 'Saint Vincent and the Grenadines', currency: 'XCD' },
+  { name: 'Samoa', currency: 'WST' },
+  { name: 'San Marino', currency: 'EUR' },
+  { name: 'Sao Tome and Principe', currency: 'STN' },
+  { name: 'Saudi Arabia', currency: 'SAR' },
+  { name: 'Senegal', currency: 'XOF' },
+  { name: 'Serbia', currency: 'RSD' },
+  { name: 'Seychelles', currency: 'SCR' },
+  { name: 'Sierra Leone', currency: 'SLL' },
+  { name: 'Singapore', currency: 'SGD' },
+  { name: 'Slovakia', currency: 'EUR' },
+  { name: 'Slovenia', currency: 'EUR' },
+  { name: 'Solomon Islands', currency: 'SBD' },
+  { name: 'Somalia', currency: 'SOS' },
+  { name: 'South Africa', currency: 'ZAR' },
+  { name: 'South Korea', currency: 'KRW' },
+  { name: 'South Sudan', currency: 'SSP' },
+  { name: 'Spain', currency: 'EUR' },
+  { name: 'Sri Lanka', currency: 'LKR' },
+  { name: 'Sudan', currency: 'SDG' },
+  { name: 'Suriname', currency: 'SRD' },
+  { name: 'Sweden', currency: 'SEK' },
+  { name: 'Switzerland', currency: 'CHF' },
+  { name: 'Syria', currency: 'SYP' },
+  { name: 'Taiwan', currency: 'TWD' },
+  { name: 'Tajikistan', currency: 'TJS' },
+  { name: 'Tanzania', currency: 'TZS' },
+  { name: 'Thailand', currency: 'THB' },
+  { name: 'Timor-Leste', currency: 'USD' },
+  { name: 'Togo', currency: 'XOF' },
+  { name: 'Tonga', currency: 'TOP' },
+  { name: 'Trinidad and Tobago', currency: 'TTD' },
+  { name: 'Tunisia', currency: 'TND' },
+  { name: 'Turkey', currency: 'TRY' },
+  { name: 'Turkmenistan', currency: 'TMT' },
+  { name: 'Tuvalu', currency: 'AUD' },
+  { name: 'Uganda', currency: 'UGX' },
+  { name: 'Ukraine', currency: 'UAH' },
+  { name: 'United Arab Emirates', currency: 'AED' },
+  { name: 'United Kingdom', currency: 'GBP' },
+  { name: 'United States', currency: 'USD' },
+  { name: 'Uruguay', currency: 'UYU' },
+  { name: 'Uzbekistan', currency: 'UZS' },
+  { name: 'Vanuatu', currency: 'VUV' },
+  { name: 'Vatican City', currency: 'EUR' },
+  { name: 'Venezuela', currency: 'VES' },
+  { name: 'Vietnam', currency: 'VND' },
+  { name: 'Yemen', currency: 'YER' },
+  { name: 'Zambia', currency: 'ZMW' },
+  { name: 'Zimbabwe', currency: 'ZWL' }
+];
+
+const CURRENCY_SYMBOLS = {
+  'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'CNY': '¥', 'AUD': '$', 'CAD': '$', 
+  'CHF': 'Fr', 'INR': '₹', 'RUB': '₽', 'BRL': 'R$', 'ZAR': 'R', 'MXN': '$', 'KRW': '₩',
+  'SGD': '$', 'HKD': '$', 'NOK': 'kr', 'SEK': 'kr', 'DKK': 'kr', 'PLN': 'zł', 'TRY': '₺',
+  'THB': '฿', 'IDR': 'Rp', 'MYR': 'RM', 'PHP': '₱', 'AED': 'د.إ', 'SAR': '﷼', 'ILS': '₪',
+  'NZD': '$', 'CZK': 'Kč', 'HUF': 'Ft', 'RON': 'lei', 'BGN': 'лв', 'CLP': '$', 'ARS': '$',
+  'COP': '$', 'PEN': 'S/', 'VND': '₫', 'EGP': '£', 'NGN': '₦', 'KES': 'KSh', 'PKR': '₨',
+  'AFN': '؋', 'ALL': 'Lek', 'DZD': 'د.ج', 'AOA': 'Kz', 'AMD': '֏', 'AZN': '₼', 'BSD': '$',
+  'BHD': '.د.ب', 'BDT': '৳', 'BBD': '$', 'BYN': 'Br', 'BZD': 'BZ$', 'XOF': 'CFA', 'BTN': 'Nu.',
+  'BOB': 'Bs.', 'BAM': 'KM', 'BWP': 'P', 'BND': '$', 'BIF': 'FBu', 'KHR': '៛', 'XAF': 'FCFA',
+  'CVE': '$', 'KMF': 'CF', 'CRC': '₡', 'CUP': '₱', 'DJF': 'Fdj', 'XCD': '$', 'DOP': 'RD$',
+  'ERN': 'Nfk', 'ETB': 'Br', 'FJD': '$', 'GMD': 'D', 'GEL': '₾', 'GNF': 'FG', 'GTQ': 'Q',
+  'GYD': '$', 'HTG': 'G', 'ISK': 'kr', 'IQD': 'ع.د', 'JMD': 'J$', 'JOD': 'JD', 'KZT': '₸',
+  'KWD': 'KD', 'KGS': 'с', 'LAK': '₭', 'LBP': 'ل.ل', 'LSL': 'L', 'LRD': '$', 'LYD': 'ل.د',
+  'MGA': 'Ar', 'MWK': 'MK', 'MVR': 'Rf', 'MRU': 'UM', 'MUR': '₨', 'MDL': 'L', 'MNT': '₮',
+  'MZN': 'MT', 'MMK': 'Ks', 'NAD': '$', 'NPR': '₨', 'NIO': 'C$', 'OMR': 'ر.ع.', 'PAB': 'B/.',
+  'PGK': 'K', 'PYG': '₲', 'QAR': 'ر.ق', 'RWF': 'RF', 'WST': 'T', 'STN': 'Db', 'SCR': '₨',
+  'SLL': 'Le', 'SBD': '$', 'SOS': 'Sh', 'SSP': '£', 'LKR': 'Rs', 'SDG': '£', 'SRD': '$',
+  'SYP': '£', 'TWD': 'NT$', 'TJS': 'ЅМ', 'TZS': 'TSh', 'TOP': 'T$', 'TTD': 'TT$', 'TND': 'د.ت',
+  'TMT': 'm', 'UGX': 'USh', 'UAH': '₴', 'UYU': '$U', 'UZS': 'soʻm', 'VUV': 'Vt', 'VES': 'Bs.S',
+  'YER': '﷼', 'ZMW': 'ZK', 'ZWL': '$'
+};
+
+
 export default function Settings() {
   const [user, setUser] = useState(null);
   const [profileData, setProfileData] = useState({
@@ -74,10 +294,6 @@ export default function Settings() {
       newErrors.full_name = 'Name must be at least 2 characters';
     }
     
-    if (profileData.country && profileData.country.trim().length < 2) {
-      newErrors.country = 'Please enter a valid country name';
-    }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -95,6 +311,15 @@ export default function Settings() {
     };
     
     updateProfileMutation.mutate(sanitizedData);
+  };
+
+  const handleCountryChange = (countryName) => {
+    const country = COUNTRIES.find(c => c.name === countryName);
+    setProfileData({
+      ...profileData,
+      country: countryName,
+      currency: country ? country.currency : profileData.currency
+    });
   };
 
   const startTrial = async () => {
@@ -370,21 +595,21 @@ export default function Settings() {
                     <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="country">
                       Country
                     </label>
-                    <Input
-                      id="country"
+                    <Select
                       value={profileData.country}
-                      onChange={(e) => setProfileData({ ...profileData, country: validateInput(e.target.value, 100) })}
-                      className={`rounded-[12px] ${errors.country ? 'border-red-500' : ''}`}
-                      placeholder="e.g., United States"
-                      maxLength={100}
-                      aria-invalid={!!errors.country}
-                    />
-                    {errors.country && (
-                      <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        {errors.country}
-                      </p>
-                    )}
+                      onValueChange={handleCountryChange}
+                    >
+                      <SelectTrigger id="country" className="rounded-[12px]">
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        {COUNTRIES.map(country => (
+                          <SelectItem key={country.name} value={country.name}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="state">
@@ -412,14 +637,17 @@ export default function Settings() {
                     <SelectTrigger id="currency" className="rounded-[12px]">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USD">USD ($)</SelectItem>
-                      <SelectItem value="EUR">EUR (€)</SelectItem>
-                      <SelectItem value="GBP">GBP (£)</SelectItem>
-                      <SelectItem value="CAD">CAD ($)</SelectItem>
-                      <SelectItem value="AUD">AUD ($)</SelectItem>
+                    <SelectContent className="max-h-[300px]">
+                      {Array.from(new Set(COUNTRIES.map(c => c.currency))).sort().map(currency => (
+                        <SelectItem key={currency} value={currency}>
+                          {currency} ({CURRENCY_SYMBOLS[currency] || currency})
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Auto-selected based on your country. You can change it manually.
+                  </p>
                 </div>
                 
                 <Button
