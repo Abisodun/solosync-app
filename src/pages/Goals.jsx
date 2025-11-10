@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -76,7 +75,7 @@ export default function Goals() {
     setEditingGoal(goal);
     setFormData({ ...goal });
     setShowForm(true);
-    setSelectedGoal(null); // Deselect any goal when editing
+    setSelectedGoal(null);
   };
 
   const addMilestone = () => {
@@ -310,7 +309,7 @@ export default function Goals() {
                   return (
                     <Card key={goal.id} className="p-6 rounded-[20px] opacity-75" style={{ background: 'rgba(255, 255, 255, 0.95)' }}>
                       <h3 className="font-bold text-gray-800">{goal.title}</h3>
-                      <span className={`inline-block px-2 py-1 rounded-[8px] text-xs font-medium mt-2 ${colors.bg} ${colors.text}`}>{colors.text ? goal.category : 'default'}</span>
+                      <span className={`inline-block px-2 py-1 rounded-[8px] text-xs font-medium mt-2 ${colors.bg} ${colors.text}`}>{goal.category}</span>
                     </Card>
                   );
                 })}
