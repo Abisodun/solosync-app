@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -10,17 +9,13 @@ import {
   DollarSign, 
   Calendar, 
   Heart,
-  Menu,
-  X,
   LogOut,
   Calculator,
   Users,
   Zap,
   Settings as SettingsIcon,
-  FolderKanban,
-  UserCircle
+  FolderKanban
 } from 'lucide-react';
-import { Button } from "@/components/ui/button";
 import SubscriptionBanner from './components/subscription/SubscriptionBanner';
 import Logo from './components/landing/Logo';
 import { differenceInDays, parseISO } from 'date-fns';
@@ -48,11 +43,9 @@ export default function Layout({ children, currentPageName }) {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
-      // Check trial expiration in real-time
       if (currentUser.subscription_status === 'trial' && currentUser.trial_end_date) {
         const daysLeft = differenceInDays(parseISO(currentUser.trial_end_date), new Date());
         if (daysLeft < 0) {
-          // Trial has expired, update status
           await base44.auth.updateMe({
             subscription_status: 'expired',
             subscription_tier: 'free'
@@ -70,8 +63,6 @@ export default function Layout({ children, currentPageName }) {
 
   useEffect(() => {
     loadUser();
-    
-    // Check trial status every 5 minutes
     const interval = setInterval(loadUser, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [loadUser]);
@@ -84,88 +75,79 @@ export default function Layout({ children, currentPageName }) {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" role="status" aria-label="Loading"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF]">
-      {/* Left Sidebar Navigation */}
-      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-slate-900 to-slate-800 z-50 flex flex-col">
-        {/* Logo Section */}
-        <div className="p-6 border-b border-slate-700 flex-shrink-0">
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF]">
+      {/* Sidebar */}
+      <div className="w-64 bg-slate-900 flex flex-col">
+        {/* Logo */}
+        <div className="p-6 border-b border-slate-700">
           <div className="flex items-center gap-3">
             <Logo className="w-10 h-10" />
-            <span className="text-xl font-bold text-white">
-              SoloSync
-            </span>
+            <span className="text-xl font-bold text-white">SoloSync</span>
           </div>
         </div>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto py-6 px-4" role="navigation" aria-label="Sidebar navigation">
-          <div className="space-y-1">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentPageName === item.page;
-              return (
-                <Link
-                  key={item.name}
-                  to={createPageUrl(item.page)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-[12px] transition-all group ${
-                    isActive
-                      ? 'bg-purple-600 text-white shadow-lg'
-                      : 'text-gray-300 hover:bg-slate-700 hover:text-white'
-                  }`}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} aria-hidden="true" />
-                  <span className="font-medium">{item.name}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-
-        {/* User Section at Bottom */}
-        <div className="p-4 border-t border-slate-700 bg-slate-900 flex-shrink-0">
-          <div className="space-y-2">
-            <Link
-              to={createPageUrl('Settings')}
-              className={`flex items-center gap-3 px-4 py-3 rounded-[12px] transition-all group ${
-                currentPageName === 'Settings'
-                  ? 'bg-purple-600 text-white shadow-lg'
-                  : 'text-gray-300 hover:bg-slate-700 hover:text-white'
-              }`}
-            >
-              <SettingsIcon className={`w-5 h-5 ${currentPageName === 'Settings' ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
-              <span className="font-medium">Settings</span>
-            </Link>
-            <button
-              onClick={() => base44.auth.logout()}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-[12px] text-gray-300 hover:bg-slate-700 hover:text-white transition-all group"
-            >
-              <LogOut className="w-5 h-5 text-gray-400 group-hover:text-white" />
-              <span className="font-medium">Sign Out</span>
-            </button>
-          </div>
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto py-4 px-3">
+          {navigation.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentPageName === item.page;
+            return (
+              <Link
+                key={item.name}
+                to={createPageUrl(item.page)}
+                className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-xl transition-all ${
+                  isActive
+                    ? 'bg-purple-600 text-white'
+                    : 'text-gray-300 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="font-medium">{item.name}</span>
+              </Link>
+            );
+          })}
         </div>
-      </aside>
 
-      {/* Main Content - Shifted right to accommodate sidebar */}
-      <main className="ml-64 min-h-screen" role="main">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Subscription Banner */}
+        {/* Bottom Actions */}
+        <div className="p-4 border-t border-slate-700">
+          <Link
+            to={createPageUrl('Settings')}
+            className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl transition-all ${
+              currentPageName === 'Settings'
+                ? 'bg-purple-600 text-white'
+                : 'text-gray-300 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <SettingsIcon className="w-5 h-5" />
+            <span className="font-medium">Settings</span>
+          </Link>
+          <button
+            onClick={() => base44.auth.logout()}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-slate-800 hover:text-white transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="font-medium">Sign Out</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto px-6 py-8">
           {showBanner && (
             <div className="mb-6">
               <SubscriptionBanner user={user} onDismiss={() => setShowBanner(false)} />
             </div>
           )}
-          
           {children}
         </div>
-      </main>
+      </div>
     </div>
   );
 }
