@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -35,13 +34,11 @@ const navigation = [
   { name: 'Workflows', icon: Zap, page: 'Workflows' },
   { name: 'Content', icon: Calendar, page: 'Content' },
   { name: 'Habits', icon: Heart, page: 'Habits' },
-  { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep' },
-  { name: 'Settings', icon: SettingsIcon, page: 'Settings' }
+  { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep' }
 ];
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
   const [loading, setLoading] = useState(true);
 
@@ -78,23 +75,6 @@ export default function Layout({ children, currentPageName }) {
     return () => clearInterval(interval);
   }, [loadUser]);
 
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [currentPageName]);
-
-  // Keyboard navigation for mobile menu
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && mobileMenuOpen) {
-        setMobileMenuOpen(false);
-      }
-    };
-    
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [mobileMenuOpen]);
-
   // Don't show layout on landing or onboarding pages
   if (currentPageName === 'Landing' || currentPageName === 'Onboarding') {
     return children;
@@ -110,7 +90,7 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF]">
-      {/* Desktop Sidebar Navigation */}
+      {/* Left Sidebar Navigation */}
       <aside className="fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-slate-900 to-slate-800 z-50">
         {/* Logo Section */}
         <div className="p-6 border-b border-slate-700">
@@ -147,110 +127,33 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </nav>
 
-        {/* User Section */}
-        <div className="p-4 border-t border-slate-700">
-          <div className="mb-3 px-2">
-            <div className="text-sm font-medium text-white truncate">{user.full_name}</div>
-            <div className="text-xs text-gray-400 truncate">{user.email}</div>
-          </div>
+        {/* User Section at Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700 bg-slate-900">
           <div className="space-y-2">
             <Link
               to={createPageUrl('Settings')}
-              className="flex items-center gap-3 px-4 py-2 rounded-[10px] text-gray-300 hover:bg-slate-700 hover:text-white transition-all"
+              className={`flex items-center gap-3 px-4 py-3 rounded-[12px] transition-all group ${
+                currentPageName === 'Settings'
+                  ? 'bg-purple-600 text-white shadow-lg'
+                  : 'text-gray-300 hover:bg-slate-700 hover:text-white'
+              }`}
             >
-              <UserCircle className="w-4 h-4" />
-              <span className="text-sm font-medium">Profile</span>
+              <SettingsIcon className={`w-5 h-5 ${currentPageName === 'Settings' ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
+              <span className="font-medium">Settings</span>
             </Link>
             <button
               onClick={() => base44.auth.logout()}
-              className="w-full flex items-center gap-3 px-4 py-2 rounded-[10px] text-gray-300 hover:bg-slate-700 hover:text-white transition-all"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-[12px] text-gray-300 hover:bg-slate-700 hover:text-white transition-all group"
             >
-              <LogOut className="w-4 h-4" />
-              <span className="text-sm font-medium">Logout</span>
+              <LogOut className="w-5 h-5 text-gray-400 group-hover:text-white" />
+              <span className="font-medium">Sign Out</span>
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Mobile Top Navigation */}
-      <nav className="md:hidden bg-white/50 backdrop-blur-lg border-b border-purple-100 sticky top-0 z-40" role="navigation" aria-label="Mobile navigation">
-        <div className="px-4 sm:px-6">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <Logo className="w-10 h-10" />
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                SoloSync
-              </span>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-[10px] hover:bg-white/70 transition-colors"
-              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="mobile-menu"
-            >
-              {mobileMenuOpen ? (
-                <X className="w-6 h-6 text-gray-600" aria-hidden="true" />
-              ) : (
-                <Menu className="w-6 h-6 text-gray-600" aria-hidden="true" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div
-            id="mobile-menu"
-            className="border-t border-purple-100 bg-white/90 backdrop-blur-lg"
-            role="menu"
-          >
-            <div className="px-4 py-4 space-y-2">
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                const isActive = currentPageName === item.page;
-                return (
-                  <Link
-                    key={item.name}
-                    to={createPageUrl(item.page)}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-[12px] transition-all ${
-                      isActive
-                        ? 'bg-purple-50 text-purple-600'
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                    role="menuitem"
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    <Icon className="w-5 h-5" aria-hidden="true" />
-                    <span className="font-medium">{item.name}</span>
-                  </Link>
-                );
-              })}
-              <div className="pt-2 mt-2 border-t border-gray-200">
-                <div className="px-4 py-2 text-sm">
-                  <div className="font-medium text-gray-800">{user.full_name}</div>
-                  <div className="text-xs text-gray-500">{user.email}</div>
-                </div>
-                <button
-                  onClick={() => base44.auth.logout()}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-[12px] text-gray-600 hover:bg-gray-50 transition-colors"
-                  role="menuitem"
-                >
-                  <LogOut className="w-5 h-5" aria-hidden="true" />
-                  <span className="font-medium">Logout</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </nav>
-
-      {/* Main Content - Shifted right on desktop to accommodate sidebar */}
-      <main className="md:ml-64 min-h-screen" role="main">
+      {/* Main Content - Shifted right to accommodate sidebar */}
+      <main className="ml-64 min-h-screen" role="main">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Subscription Banner */}
           {showBanner && (
