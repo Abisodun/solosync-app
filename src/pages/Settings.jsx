@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings as SettingsIcon, User, CreditCard, Globe, Sparkles, Check, Crown, Zap, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Settings as SettingsIcon, User, CreditCard, Globe, Sparkles, Check, Crown, Zap, AlertCircle, CheckCircle2, LayoutDashboard } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import Sidebar from '../components/common/Sidebar';
+import { Switch } from "@/components/ui/switch";
 
 const validateInput = (value, maxLength = 100) => {
   if (!value) return '';
@@ -240,7 +241,6 @@ const CURRENCY_SYMBOLS = {
   'YER': '﷼', 'ZMW': 'ZK', 'ZWL': '$'
 };
 
-
 export default function Settings() {
   const [user, setUser] = useState(null);
   const [profileData, setProfileData] = useState({
@@ -248,6 +248,17 @@ export default function Settings() {
     country: '',
     state_province: '',
     currency: 'USD'
+  });
+  const [dashboardPrefs, setDashboardPrefs] = useState({
+    show_upcoming_tasks: true,
+    show_recent_tasks: true,
+    show_active_goals: true,
+    show_active_habits: true,
+    show_content_calendar: true,
+    show_reminders: true,
+    show_stats: true,
+    show_ai_tip: true,
+    show_projects: true
   });
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
@@ -268,6 +279,11 @@ export default function Settings() {
         state_province: validateInput(currentUser.state_province || '', 100),
         currency: currentUser.currency || 'USD'
       });
+      
+      // Load dashboard preferences
+      if (currentUser.dashboard_preferences) {
+        setDashboardPrefs(currentUser.dashboard_preferences);
+      }
     } catch (error) {
       console.error('Error loading user settings:', error);
     }
@@ -284,6 +300,20 @@ export default function Settings() {
     onError: (error) => {
       console.error('Error updating profile:', error);
       setErrors({ submit: error.message || 'Failed to update profile' });
+    }
+  });
+
+  const updateDashboardPrefsMutation = useMutation({
+    mutationFn: (prefs) => base44.auth.updateMe({ dashboard_preferences: prefs }),
+    onSuccess: () => {
+      // Invalidate the user query to refetch updated dashboard preferences
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      setSuccessMessage('Dashboard preferences updated!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    },
+    onError: (error) => {
+      console.error('Error updating dashboard preferences:', error);
+      setErrors({ dashboard: error.message || 'Failed to update dashboard preferences' });
     }
   });
 
@@ -320,6 +350,12 @@ export default function Settings() {
       country: countryName,
       currency: country ? country.currency : profileData.currency
     });
+  };
+
+  const handleDashboardPrefChange = (key, value) => {
+    const newPrefs = { ...dashboardPrefs, [key]: value };
+    setDashboardPrefs(newPrefs);
+    updateDashboardPrefsMutation.mutate(newPrefs);
   };
 
   const startTrial = async () => {
@@ -386,6 +422,18 @@ export default function Settings() {
     }
   ];
 
+  const dashboardWidgets = [
+    { key: 'show_stats', label: 'Statistics Cards', description: 'Show key metrics at the top' },
+    { key: 'show_ai_tip', label: 'AI Productivity Tip', description: 'Get personalized daily tips' },
+    { key: 'show_upcoming_tasks', label: 'Upcoming Deadlines', description: 'Tasks due soon' },
+    { key: 'show_recent_tasks', label: 'Recent Tasks', description: 'Your latest active tasks' },
+    { key: 'show_active_goals', label: 'Active Goals', description: 'Goal progress tracking' },
+    { key: 'show_active_habits', label: 'Active Habits', description: 'Habit streak tracking' },
+    { key: 'show_projects', label: 'Projects Widget', description: 'Active projects overview' },
+    { key: 'show_content_calendar', label: 'Content Calendar', description: 'Upcoming content schedule' },
+    { key: 'show_reminders', label: 'Reminders', description: 'Pending notifications' }
+  ];
+
   return (
     <>
       <Sidebar currentPage="Settings" />
@@ -398,12 +446,13 @@ export default function Settings() {
       }}>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
-          <p className="text-gray-600 mt-1">Manage your account and subscription</p>
+          <p className="text-gray-600 mt-1">Manage your account and preferences</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Subscription Card */}
+          {/* Main Settings Column */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Subscription Card */}
             <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}>
@@ -412,7 +461,6 @@ export default function Settings() {
                 <h2 className="text-2xl font-bold text-gray-800">Subscription & Billing</h2>
               </div>
 
-              {/* Current Plan Status */}
               <div className="mb-6 p-5 rounded-[16px]" style={{ background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%)' }}>
                 <div className="flex items-start justify-between">
                   <div>
@@ -440,7 +488,6 @@ export default function Settings() {
                 </div>
               </div>
 
-              {/* Available Plans */}
               <div className="space-y-4">
                 <h3 className="text-lg font-bold text-gray-800 mb-4">Available Plans</h3>
                 {plans.map((plan) => {
@@ -517,11 +564,57 @@ export default function Settings() {
                 })}
               </div>
 
-              {/* Payment Info Note */}
               <div className="mt-6 p-4 bg-blue-50 rounded-[12px] border border-blue-200">
                 <p className="text-sm text-blue-800">
                   💳 <strong>Secure Payment:</strong> Payments are processed securely via Stripe. Your card information is never stored on our servers.
                 </p>
+              </div>
+            </Card>
+
+            {/* Dashboard Customization */}
+            <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F9A8D4 0%, #EC4899 100%)' }}>
+                  <LayoutDashboard className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">Dashboard Widgets</h2>
+              </div>
+
+              <p className="text-sm text-gray-600 mb-6">
+                Choose which widgets to display on your dashboard. Changes are saved automatically.
+              </p>
+
+              {successMessage.includes('Dashboard preferences updated!') && (
+                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-[12px]">
+                  <p className="text-sm text-green-800 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    {successMessage}
+                  </p>
+                </div>
+              )}
+              {errors.dashboard && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-[12px]">
+                  <p className="text-sm text-red-800 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.dashboard}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {dashboardWidgets.map((widget) => (
+                  <div key={widget.key} className="flex items-center justify-between p-4 rounded-[12px] bg-gray-50">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-800 text-sm">{widget.label}</h4>
+                      <p className="text-xs text-gray-600 mt-1">{widget.description}</p>
+                    </div>
+                    <Switch
+                      checked={dashboardPrefs[widget.key]}
+                      onCheckedChange={(checked) => handleDashboardPrefChange(widget.key, checked)}
+                      disabled={updateDashboardPrefsMutation.isPending}
+                    />
+                  </div>
+                ))}
               </div>
             </Card>
 
@@ -534,7 +627,7 @@ export default function Settings() {
                 <h2 className="text-2xl font-bold text-gray-800">Profile Settings</h2>
               </div>
 
-              {successMessage && (
+              {successMessage.includes('Profile updated successfully!') && (
                 <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-[12px]">
                   <p className="text-sm text-green-800 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" />
