@@ -27,9 +27,9 @@ export default function Content() {
 
   const createContentMutation = useMutation({
     mutationFn: async (data) => {
-      console.log('Creating content with data:', data);
+      console.log('Creating content with data:', JSON.stringify(data, null, 2));
       const result = await base44.entities.ContentItem.create(data);
-      console.log('Created content:', result);
+      console.log('Created content result:', JSON.stringify(result, null, 2));
       return result;
     },
     onSuccess: () => {
@@ -42,9 +42,9 @@ export default function Content() {
 
   const updateContentMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      console.log('Updating content:', id, data);
+      console.log('Updating content:', id, JSON.stringify(data, null, 2));
       const result = await base44.entities.ContentItem.update(id, data);
-      console.log('Updated content:', result);
+      console.log('Updated content result:', JSON.stringify(result, null, 2));
       return result;
     },
     onSuccess: () => {
@@ -56,15 +56,30 @@ export default function Content() {
   });
 
   const handleSubmit = (data) => {
-    // Ensure status is set correctly before submission
+    console.log('=== CONTENT SUBMIT START ===');
+    console.log('Raw form data received:', JSON.stringify(data, null, 2));
+    
+    // Create a clean copy
     const finalData = { ...data };
-    if (finalData.scheduled_date && !finalData.status) {
-      finalData.status = 'scheduled';
-    } else if (finalData.scheduled_date && finalData.status === 'idea') {
-      finalData.status = 'scheduled';
+    
+    // Convert datetime-local format to ISO string if needed
+    if (finalData.scheduled_date) {
+      // If it's in datetime-local format (YYYY-MM-DDTHH:mm), convert to ISO
+      if (finalData.scheduled_date.length === 16) {
+        // Add seconds and convert to ISO
+        finalData.scheduled_date = new Date(finalData.scheduled_date).toISOString();
+        console.log('Converted scheduled_date to ISO:', finalData.scheduled_date);
+      }
+      
+      // Ensure status is 'scheduled' when date exists
+      if (finalData.status === 'idea' || finalData.status === 'draft' || !finalData.status) {
+        console.log('Auto-setting status to "scheduled" because scheduled_date exists');
+        finalData.status = 'scheduled';
+      }
     }
     
-    console.log('Submitting content:', finalData);
+    console.log('Final data to submit:', JSON.stringify(finalData, null, 2));
+    console.log('=== CONTENT SUBMIT END ===');
     
     if (editingContent) {
       updateContentMutation.mutate({ id: editingContent.id, data: finalData });
@@ -74,6 +89,7 @@ export default function Content() {
   };
 
   const handleEdit = (item) => {
+    console.log('Editing content item:', JSON.stringify(item, null, 2));
     setEditingContent(item);
     setShowForm(true);
     setSelectedContent(null);
@@ -102,7 +118,8 @@ export default function Content() {
     total: contentItems.length,
     scheduled: scheduledCount,
     published: publishedCount,
-    draft: draftCount
+    draft: draftCount,
+    items: contentItems.map(c => ({ id: c.id, title: c.title, status: c.status, scheduled_date: c.scheduled_date }))
   });
 
   return (
