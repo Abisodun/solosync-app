@@ -55,40 +55,44 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF]">
       {/* Fixed Navigation Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200" role="banner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-2 sm:gap-3">
-              <Logo className="w-8 h-8 sm:w-9 sm:h-9" />
+              <Logo className="w-8 h-8 sm:w-9 sm:h-9" aria-hidden="true" />
               <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 SoloSync
               </span>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-8">
+            <nav className="hidden lg:flex items-center gap-8" role="navigation" aria-label="Main navigation">
               <button 
                 onClick={() => scrollToSection('features')} 
-                className="text-gray-700 hover:text-purple-600 transition-colors font-semibold text-sm"
+                className="text-gray-800 hover:text-purple-600 transition-colors font-semibold text-sm"
+                aria-label="Navigate to features section"
               >
                 Features
               </button>
               <button 
                 onClick={() => scrollToSection('comparison')} 
-                className="text-gray-700 hover:text-purple-600 transition-colors font-semibold text-sm"
+                className="text-gray-800 hover:text-purple-600 transition-colors font-semibold text-sm"
+                aria-label="Navigate to comparison section"
               >
                 Compare
               </button>
               <button 
                 onClick={() => scrollToSection('testimonials')} 
-                className="text-gray-700 hover:text-purple-600 transition-colors font-semibold text-sm"
+                className="text-gray-800 hover:text-purple-600 transition-colors font-semibold text-sm"
+                aria-label="Navigate to reviews section"
               >
                 Reviews
               </button>
               <button 
                 onClick={() => scrollToSection('pricing')} 
-                className="text-gray-700 hover:text-purple-600 transition-colors font-semibold text-sm"
+                className="text-gray-800 hover:text-purple-600 transition-colors font-semibold text-sm"
+                aria-label="Navigate to pricing section"
               >
                 Pricing
               </button>
@@ -99,7 +103,8 @@ export default function Landing() {
               {/* Desktop Login Button */}
               <button
                 onClick={handleLoginClick}
-                className="hidden lg:inline-flex items-center gap-2 text-gray-700 hover:text-purple-600 transition-colors font-semibold text-sm"
+                className="hidden lg:inline-flex items-center gap-2 text-gray-800 hover:text-purple-600 transition-colors font-semibold text-sm"
+                aria-label="Login to your account"
               >
                 Login
               </button>
@@ -108,6 +113,7 @@ export default function Landing() {
               <Button
                 onClick={handleCTAClick}
                 className="hidden sm:inline-flex rounded-md px-5 py-2 text-sm font-bold text-white bg-gray-900 hover:bg-gray-800 transition-colors"
+                aria-label="Sign up for free trial"
               >
                 Sign Up
               </Button>
@@ -117,6 +123,7 @@ export default function Landing() {
                 onClick={handleCTAClick}
                 size="sm"
                 className="sm:hidden rounded-md px-3 py-2 text-xs font-bold text-white bg-gray-900 hover:bg-gray-800"
+                aria-label="Sign up for free trial"
               >
                 Sign Up
               </Button>
@@ -125,11 +132,14 @@ export default function Landing() {
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition-colors"
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-menu"
               >
                 {mobileMenuOpen ? (
-                  <X className="w-6 h-6 text-gray-700" />
+                  <X className="w-6 h-6 text-gray-800" aria-hidden="true" />
                 ) : (
-                  <Menu className="w-6 h-6 text-gray-700" />
+                  <Menu className="w-6 h-6 text-gray-800" aria-hidden="true" />
                 )}
               </button>
             </div>
@@ -139,41 +149,49 @@ export default function Landing() {
           <AnimatePresence>
             {mobileMenuOpen && (
               <motion.div
+                id="mobile-menu"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 className="lg:hidden border-t border-gray-200"
+                role="navigation"
+                aria-label="Mobile navigation"
               >
                 <div className="py-4 space-y-1">
                   <button
                     onClick={() => scrollToSection('features')}
-                    className="w-full text-left px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm"
+                    className="w-full text-left px-4 py-3 text-gray-800 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm"
+                    aria-label="Navigate to features section"
                   >
                     Features
                   </button>
                   <button
                     onClick={() => scrollToSection('comparison')}
-                    className="w-full text-left px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm"
+                    className="w-full text-left px-4 py-3 text-gray-800 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm"
+                    aria-label="Navigate to comparison section"
                   >
                     Compare
                   </button>
                   <button
                     onClick={() => scrollToSection('testimonials')}
-                    className="w-full text-left px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm"
+                    className="w-full text-left px-4 py-3 text-gray-800 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm"
+                    aria-label="Navigate to reviews section"
                   >
                     Reviews
                   </button>
                   <button
                     onClick={() => scrollToSection('pricing')}
-                    className="w-full text-left px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm"
+                    className="w-full text-left px-4 py-3 text-gray-800 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm"
+                    aria-label="Navigate to pricing section"
                   >
                     Pricing
                   </button>
                   <button
                     onClick={handleLoginClick}
-                    className="w-full text-left px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm flex items-center gap-2"
+                    className="w-full text-left px-4 py-3 text-gray-800 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm flex items-center gap-2"
+                    aria-label="Login to your account"
                   >
-                    <LogIn className="w-4 h-4" />
+                    <LogIn className="w-4 h-4" aria-hidden="true" />
                     Login
                   </button>
                 </div>
@@ -186,38 +204,44 @@ export default function Landing() {
       {/* Add padding-top to account for fixed header */}
       <div className="pt-16">
         {/* Hero Section */}
-        <div id="hero">
+        <section id="hero" aria-label="Hero section">
           <HeroSection />
-        </div>
+        </section>
 
         {/* Features Showcase */}
-        <div id="features">
+        <section id="features" aria-label="Features showcase">
           <FeaturesShowcase />
-        </div>
+        </section>
 
         {/* Day in Life Section */}
-        <DayInLifeSection />
+        <section aria-label="Day in the life">
+          <DayInLifeSection />
+        </section>
 
         {/* Comparison Section */}
-        <div id="comparison">
+        <section id="comparison" aria-label="Product comparison">
           <ComparisonSection />
-        </div>
+        </section>
 
         {/* Demo Section */}
-        <DemoSection />
+        <section aria-label="Product demo">
+          <DemoSection />
+        </section>
 
         {/* Testimonials */}
-        <div id="testimonials">
+        <section id="testimonials" aria-label="Customer testimonials">
           <TestimonialsSection />
-        </div>
+        </section>
 
         {/* Pricing */}
-        <div id="pricing">
+        <section id="pricing" aria-label="Pricing plans">
           <PricingSection />
-        </div>
+        </section>
 
         {/* Footer */}
-        <Footer />
+        <footer role="contentinfo">
+          <Footer />
+        </footer>
 
         {/* Floating CTA */}
         <FloatingCTA />
