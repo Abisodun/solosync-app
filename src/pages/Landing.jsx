@@ -22,11 +22,13 @@ export default function Landing() {
 
   const handleCTAClick = () => {
     // Redirect to login/signup, then to onboarding after successful auth
-    base44.auth.redirectToLogin(createPageUrl('Onboarding'));
+    const onboardingUrl = window.location.origin + createPageUrl('Onboarding');
+    base44.auth.redirectToLogin(onboardingUrl);
   };
 
   const handleLoginClick = () => {
-    base44.auth.redirectToLogin(createPageUrl('Dashboard'));
+    const dashboardUrl = window.location.origin + createPageUrl('Dashboard');
+    base44.auth.redirectToLogin(dashboardUrl);
   };
 
   const scrollToSection = (sectionId) => {
