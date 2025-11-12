@@ -41,18 +41,20 @@ export default function TasksPage() {
     mutationFn: (data) => base44.entities.Task.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.refetchQueries({ queryKey: ['tasks'] });
       resetForm();
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      console.log('Updating task:', id, data);
+      console.log('Updating task:', id, 'with data:', data);
       const result = await base44.entities.Task.update(id, data);
       console.log('Update result:', result);
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Task updated successfully:', data);
       // Force refetch
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.refetchQueries({ queryKey: ['tasks'] });
@@ -84,6 +86,7 @@ export default function TasksPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('Submitting form with data:', formData);
     if (editingTask) {
       updateMutation.mutate({ id: editingTask.id, data: formData });
     } else {
@@ -93,19 +96,40 @@ export default function TasksPage() {
 
   const handleEdit = (task) => {
     setEditingTask(task);
-    setFormData({ ...task });
+    setFormData({ 
+      title: task.title || '',
+      description: task.description || '',
+      status: task.status || 'todo',
+      priority: task.priority || 'medium',
+      due_date: task.due_date || '',
+      project: task.project || '',
+      tags: task.tags || []
+    });
     setShowForm(true);
   };
 
+  // FIXED: Direct toggle between todo and done (simpler workflow)
   const handleStatusToggle = (task) => {
-    const newStatus = task.status === 'done' ? 'todo' : task.status === 'todo' ? 'in_progress' : 'done';
-    console.log('Toggling status from', task.status, 'to', newStatus);
+    const newStatus = task.status === 'done' ? 'todo' : 'done';
+    console.log('Toggling task status from', task.status, 'to', newStatus);
     updateMutation.mutate({ 
       id: task.id, 
       data: { 
         ...task, 
         status: newStatus 
       } 
+    });
+  };
+
+  // Direct mark complete action
+  const handleMarkComplete = (task) => {
+    console.log('Marking task as complete:', task.id);
+    updateMutation.mutate({
+      id: task.id,
+      data: {
+        ...task,
+        status: 'done'
+      }
     });
   };
 
@@ -173,7 +197,11 @@ export default function TasksPage() {
               {prioritizeMutation.isPending ? 'Prioritizing...' : 'AI Prioritize'}
             </Button>
             <Button
-              onClick={() => setShowForm(!showForm)}
+              onClick={() => {
+                setShowForm(!showForm);
+                setEditingTask(null);
+                resetForm();
+              }}
               className="rounded-[14px] text-white"
               style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
             >
@@ -215,7 +243,13 @@ export default function TasksPage() {
                     className="rounded-[12px] h-24"
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                    <Select 
+                      value={formData.status} 
+                      onValueChange={(value) => {
+                        console.log('Status changed to:', value);
+                        setFormData({ ...formData, status: value });
+                      }}
+                    >
                       <SelectTrigger className="rounded-[12px]">
                         <SelectValue placeholder="Status" />
                       </SelectTrigger>
@@ -251,8 +285,13 @@ export default function TasksPage() {
                   />
                   <div className="flex gap-3 justify-end">
                     <Button type="button" variant="outline" onClick={resetForm} className="rounded-[12px]">Cancel</Button>
-                    <Button type="submit" className="rounded-[12px] text-white" style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}>
-                      {editingTask ? 'Update' : 'Create'} Task
+                    <Button 
+                      type="submit" 
+                      className="rounded-[14px] text-white" 
+                      style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+                      disabled={updateMutation.isPending}
+                    >
+                      {updateMutation.isPending ? 'Saving...' : editingTask ? 'Update Task' : 'Create Task'}
                     </Button>
                   </div>
                 </form>
@@ -331,7 +370,11 @@ export default function TasksPage() {
                                     <div {...provided.dragHandleProps} className="mt-1 cursor-grab active:cursor-grabbing">
                                       <GripVertical className="w-4 h-4 text-gray-400" />
                                     </div>
-                                    <button onClick={() => handleStatusToggle(task)} className="mt-1">
+                                    <button 
+                                      onClick={() => handleStatusToggle(task)} 
+                                      className="mt-1"
+                                      aria-label={task.status === 'done' ? 'Mark as incomplete' : 'Mark as complete'}
+                                    >
                                       {task.status === 'done' ? (
                                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                                       ) : task.status === 'in_progress' ? (
@@ -359,13 +402,26 @@ export default function TasksPage() {
                                     </div>
                                   </div>
                                   <div className="flex items-center justify-between">
-                                    <div className={`px-2 py-1 rounded-[8px] text-xs font-medium ${
-                                      task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                                      task.priority === 'high' ? 'bg-orange-100 text-orange-700' : 
-                                      task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 
-                                      'bg-blue-100 text-blue-700'
-                                    }`}>
-                                      {task.priority}
+                                    <div className="flex gap-2">
+                                      <div className={`px-2 py-1 rounded-[8px] text-xs font-medium ${
+                                        task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                                        task.priority === 'high' ? 'bg-orange-100 text-orange-700' : 
+                                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 
+                                        'bg-blue-100 text-blue-700'
+                                      }`}>
+                                        {task.priority}
+                                      </div>
+                                      {task.status !== 'done' && (
+                                        <Button
+                                          size="sm"
+                                          onClick={() => handleMarkComplete(task)}
+                                          className="text-xs h-7 rounded-[8px] text-white"
+                                          style={{ background: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' }}
+                                        >
+                                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                                          Complete
+                                        </Button>
+                                      )}
                                     </div>
                                     <div className="flex gap-2">
                                       <button onClick={() => handleEdit(task)} className="p-1 hover:bg-gray-100 rounded">

@@ -23,32 +23,45 @@ export default function ContentForm({ content, onSubmit, onCancel }) {
 
   // Auto-update status when scheduled_date changes
   useEffect(() => {
-    if (formData.scheduled_date && formData.status === 'idea') {
-      setFormData(prev => ({ ...prev, status: 'scheduled' }));
-    } else if (!formData.scheduled_date && formData.status === 'scheduled') {
-      setFormData(prev => ({ ...prev, status: 'draft' }));
+    if (formData.scheduled_date) {
+      // If a date is set, automatically change status to "scheduled"
+      if (formData.status === 'idea' || formData.status === 'draft') {
+        console.log('Auto-setting status to scheduled because date was selected');
+        setFormData(prev => ({ ...prev, status: 'scheduled' }));
+      }
     }
   }, [formData.scheduled_date]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Ensure status is correct based on scheduled_date before submitting
+    // CRITICAL: Ensure status is correct based on scheduled_date before submitting
     const finalData = { ...formData };
-    if (finalData.scheduled_date && finalData.status === 'idea') {
-      finalData.status = 'scheduled';
+    
+    if (finalData.scheduled_date) {
+      // If there's a scheduled date, status MUST be "scheduled"
+      if (finalData.status === 'idea' || finalData.status === 'draft') {
+        console.log('Force setting status to scheduled on submit');
+        finalData.status = 'scheduled';
+      }
     }
     
+    console.log('Submitting content form with data:', finalData);
     onSubmit(finalData);
   };
 
   const handleScheduledDateChange = (value) => {
-    setFormData(prev => ({
-      ...prev,
-      scheduled_date: value,
-      // Auto-set status to scheduled if a date is selected
-      status: value ? 'scheduled' : prev.status
-    }));
+    console.log('Scheduled date changed to:', value);
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        scheduled_date: value,
+        // Auto-set status to scheduled if a date is selected
+        status: value ? 'scheduled' : (prev.status === 'scheduled' ? 'draft' : prev.status)
+      };
+      console.log('Updated form data:', newData);
+      return newData;
+    });
   };
 
   const addTag = () => {
@@ -182,21 +195,29 @@ export default function ContentForm({ content, onSubmit, onCancel }) {
               className="rounded-[12px]"
               autoComplete="off"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              {formData.scheduled_date 
-                ? '✓ Status will be set to "scheduled"' 
-                : 'Select a date to schedule this content'}
-            </p>
+            {formData.scheduled_date && (
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                ✓ Status will be set to "scheduled"
+              </p>
+            )}
+            {!formData.scheduled_date && (
+              <p className="text-xs text-gray-500 mt-1">
+                Select a date to schedule this content
+              </p>
+            )}
           </div>
 
-          {/* Status */}
+          {/* Status - Now read-only when date is set */}
           <div>
             <label htmlFor="content-status" className="text-sm font-semibold text-gray-700 mb-2 block">
-              Status *
+              Status * {formData.scheduled_date && <span className="text-xs text-gray-500">(auto-set when scheduled)</span>}
             </label>
             <Select
               value={formData.status}
-              onValueChange={(value) => setFormData({ ...formData, status: value })}
+              onValueChange={(value) => {
+                console.log('Status manually changed to:', value);
+                setFormData({ ...formData, status: value });
+              }}
             >
               <SelectTrigger id="content-status" className="rounded-[12px]">
                 <SelectValue />
