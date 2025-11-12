@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,9 +21,34 @@ export default function ContentForm({ content, onSubmit, onCancel }) {
 
   const [tagInput, setTagInput] = useState('');
 
+  // Auto-update status when scheduled_date changes
+  useEffect(() => {
+    if (formData.scheduled_date && formData.status === 'idea') {
+      setFormData(prev => ({ ...prev, status: 'scheduled' }));
+    } else if (!formData.scheduled_date && formData.status === 'scheduled') {
+      setFormData(prev => ({ ...prev, status: 'draft' }));
+    }
+  }, [formData.scheduled_date]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Ensure status is correct based on scheduled_date before submitting
+    const finalData = { ...formData };
+    if (finalData.scheduled_date && finalData.status === 'idea') {
+      finalData.status = 'scheduled';
+    }
+    
+    onSubmit(finalData);
+  };
+
+  const handleScheduledDateChange = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      scheduled_date: value,
+      // Auto-set status to scheduled if a date is selected
+      status: value ? 'scheduled' : prev.status
+    }));
   };
 
   const addTag = () => {
@@ -144,41 +169,50 @@ export default function ContentForm({ content, onSubmit, onCancel }) {
             </div>
           </div>
 
-          {/* Status and Scheduled Date */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="content-status" className="text-sm font-semibold text-gray-700 mb-2 block">
-                Status *
-              </label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger id="content-status" className="rounded-[12px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="idea">Idea</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="scheduled">Scheduled</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Scheduled Date - Now with auto-status update */}
+          <div>
+            <label htmlFor="scheduled-date" className="text-sm font-semibold text-gray-700 mb-2 block">
+              Scheduled Date & Time
+            </label>
+            <Input
+              id="scheduled-date"
+              type="datetime-local"
+              value={formData.scheduled_date}
+              onChange={(e) => handleScheduledDateChange(e.target.value)}
+              className="rounded-[12px]"
+              autoComplete="off"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {formData.scheduled_date 
+                ? '✓ Status will be set to "scheduled"' 
+                : 'Select a date to schedule this content'}
+            </p>
+          </div>
 
-            <div>
-              <label htmlFor="scheduled-date" className="text-sm font-semibold text-gray-700 mb-2 block">
-                Scheduled Date
-              </label>
-              <Input
-                id="scheduled-date"
-                type="datetime-local"
-                value={formData.scheduled_date}
-                onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
-                className="rounded-[12px]"
-                autoComplete="off"
-              />
-            </div>
+          {/* Status */}
+          <div>
+            <label htmlFor="content-status" className="text-sm font-semibold text-gray-700 mb-2 block">
+              Status *
+            </label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => setFormData({ ...formData, status: value })}
+            >
+              <SelectTrigger id="content-status" className="rounded-[12px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="idea">Idea</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="scheduled">Scheduled</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+              </SelectContent>
+            </Select>
+            {formData.scheduled_date && formData.status !== 'scheduled' && (
+              <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                ⚠️ You have a scheduled date but status is not "scheduled"
+              </p>
+            )}
           </div>
 
           {/* Tags */}
