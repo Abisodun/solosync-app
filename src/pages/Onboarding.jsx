@@ -57,9 +57,10 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [selectedRole, setSelectedRole] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState('minimal');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [savingSetup, setSavingSetup] = useState(false);
 
   useEffect(() => {
     loadUser();
@@ -67,8 +68,18 @@ export default function Onboarding() {
 
   const loadUser = async () => {
     try {
+      // Check if user is authenticated
+      const isAuthenticated = await base44.auth.isAuthenticated();
+      
+      if (!isAuthenticated) {
+        // Not authenticated, redirect to login with onboarding as next URL
+        base44.auth.redirectToLogin(createPageUrl('Onboarding'));
+        return;
+      }
+
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+      setLoading(false);
       
       // If already onboarded, redirect to dashboard
       if (currentUser.onboarding_completed) {
@@ -76,12 +87,18 @@ export default function Onboarding() {
       }
     } catch (error) {
       console.error('Error loading user:', error);
-      setError('Failed to load user data. Please refresh the page.');
+      // If there's an auth error, redirect to login
+      if (error.message?.includes('Authentication') || error.message?.includes('401')) {
+        base44.auth.redirectToLogin(createPageUrl('Onboarding'));
+      } else {
+        setError('Failed to load user data. Please refresh the page.');
+        setLoading(false);
+      }
     }
   };
 
   const handleComplete = async () => {
-    if (loading) return;
+    if (savingSetup) return;
     
     if (!selectedRole) {
       setError('Please select a role first');
@@ -93,7 +110,7 @@ export default function Onboarding() {
       return;
     }
     
-    setLoading(true);
+    setSavingSetup(true);
     setError(null);
     
     try {
@@ -116,9 +133,21 @@ export default function Onboarding() {
     } catch (error) {
       console.error('Error completing onboarding:', error);
       setError(error.message || 'Failed to complete setup. Please try again.');
-      setLoading(false);
+      setSavingSetup(false);
     }
   };
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your workspace...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderStep = () => {
     switch (step) {
@@ -310,7 +339,7 @@ export default function Onboarding() {
             variant="outline"
             size="lg"
             onClick={() => setStep(step - 1)}
-            disabled={step === 1 || loading}
+            disabled={step === 1 || savingSetup}
             className="rounded-[16px] px-8"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -331,15 +360,15 @@ export default function Onboarding() {
                 handleComplete();
               }
             }}
-            disabled={loading}
+            disabled={savingSetup}
             className="rounded-[16px] px-8 text-white"
             style={{
               background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
               boxShadow: '0 8px 24px rgba(139, 92, 246, 0.3)'
             }}
           >
-            {loading ? 'Setting up...' : step === 2 ? 'Complete Setup' : 'Continue'}
-            {!loading && <ArrowRight className="w-5 h-5 ml-2" />}
+            {savingSetup ? 'Setting up...' : step === 2 ? 'Complete Setup' : 'Continue'}
+            {!savingSetup && <ArrowRight className="w-5 h-5 ml-2" />}
           </Button>
         </div>
       </div>

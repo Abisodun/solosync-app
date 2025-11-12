@@ -29,7 +29,8 @@ export default function Landing() {
   }, []);
 
   const handleCTAClick = () => {
-    window.location.href = createPageUrl('Onboarding');
+    // Redirect to login/signup, then to onboarding after successful auth
+    base44.auth.redirectToLogin(createPageUrl('Onboarding'));
   };
 
   const handleLoginClick = () => {
