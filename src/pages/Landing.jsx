@@ -19,7 +19,6 @@ import Logo from '../components/landing/Logo';
 
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,25 +28,8 @@ export default function Landing() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const authenticated = await base44.auth.isAuthenticated();
-      setIsAuthenticated(authenticated);
-    } catch (error) {
-      setIsAuthenticated(false);
-    }
-  };
-
   const handleCTAClick = () => {
-    if (isAuthenticated) {
-      window.location.href = createPageUrl('Dashboard');
-    } else {
-      window.location.href = createPageUrl('Onboarding');
-    }
+    window.location.href = createPageUrl('Onboarding');
   };
 
   const handleLoginClick = () => {
@@ -89,16 +71,14 @@ export default function Landing() {
               <a href="#pricing" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">Pricing</a>
             </div>
             <div className="flex items-center gap-3">
-              {!isAuthenticated && (
-                <Button
-                  onClick={handleLoginClick}
-                  variant="outline"
-                  className="rounded-[14px] px-6 font-medium"
-                >
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Log In
-                </Button>
-              )}
+              <Button
+                onClick={handleLoginClick}
+                variant="outline"
+                className="rounded-[14px] px-6 font-medium"
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Log In
+              </Button>
               <Button
                 onClick={handleCTAClick}
                 className="rounded-[14px] px-6 text-white font-medium"
@@ -111,7 +91,7 @@ export default function Landing() {
                   `
                 }}
               >
-                {isAuthenticated ? 'Go to Dashboard' : 'Start Free Trial'}
+                Start Free Trial
               </Button>
             </div>
           </div>
