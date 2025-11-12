@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ArrowLeft, Sparkles, Briefcase, Palette, Store, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Sparkles, Briefcase, Palette, Store, CheckCircle2, AlertCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
 
@@ -58,6 +58,7 @@ export default function Onboarding() {
   const [selectedRole, setSelectedRole] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState('minimal');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -75,25 +76,46 @@ export default function Onboarding() {
       }
     } catch (error) {
       console.error('Error loading user:', error);
+      setError('Failed to load user data. Please refresh the page.');
     }
   };
 
   const handleComplete = async () => {
     if (loading) return;
     
+    if (!selectedRole) {
+      setError('Please select a role first');
+      return;
+    }
+
+    if (!user) {
+      setError('User data not loaded. Please refresh the page.');
+      return;
+    }
+    
     setLoading(true);
+    setError(null);
+    
     try {
-      // Update user profile with onboarding_completed flag
+      console.log('Updating user with:', {
+        user_type: selectedRole,
+        workspace_style: selectedStyle,
+        onboarding_completed: true
+      });
+
       await base44.auth.updateMe({
         user_type: selectedRole,
         workspace_style: selectedStyle,
         onboarding_completed: true
       });
 
+      console.log('User updated successfully, redirecting to dashboard...');
+
       // Redirect to dashboard
       window.location.href = createPageUrl('Dashboard');
     } catch (error) {
       console.error('Error completing onboarding:', error);
+      setError(error.message || 'Failed to complete setup. Please try again.');
       setLoading(false);
     }
   };
@@ -263,6 +285,20 @@ export default function Onboarding() {
           </p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-5xl mx-auto mb-6"
+          >
+            <div className="bg-red-50 border border-red-200 rounded-[16px] p-4 flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          </motion.div>
+        )}
+
         {/* Step Content */}
         <AnimatePresence mode="wait">
           {renderStep()}
@@ -274,7 +310,7 @@ export default function Onboarding() {
             variant="outline"
             size="lg"
             onClick={() => setStep(step - 1)}
-            disabled={step === 1}
+            disabled={step === 1 || loading}
             className="rounded-[16px] px-8"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -285,12 +321,17 @@ export default function Onboarding() {
             size="lg"
             onClick={() => {
               if (step < 2) {
+                if (!selectedRole) {
+                  setError('Please select a role to continue');
+                  return;
+                }
+                setError(null);
                 setStep(step + 1);
               } else {
                 handleComplete();
               }
             }}
-            disabled={(step === 1 && !selectedRole) || loading}
+            disabled={loading}
             className="rounded-[16px] px-8 text-white"
             style={{
               background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
