@@ -69,16 +69,15 @@ export default function Landing() {
               <a href="#comparison" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">Compare</a>
               <a href="#testimonials" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">Reviews</a>
               <a href="#pricing" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">Pricing</a>
+              <button
+                onClick={handleLoginClick}
+                className="text-gray-700 hover:text-purple-600 transition-colors font-medium flex items-center gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                Log In
+              </button>
             </div>
             <div className="flex items-center gap-3">
-              <Button
-                onClick={handleLoginClick}
-                variant="outline"
-                className="rounded-[14px] px-6 font-medium"
-              >
-                <LogIn className="w-4 h-4 mr-2" />
-                Log In
-              </Button>
               <Button
                 onClick={handleCTAClick}
                 className="rounded-[14px] px-6 text-white font-medium"

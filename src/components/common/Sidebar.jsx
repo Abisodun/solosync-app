@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -35,6 +35,10 @@ const navigation = [
 
 export default function Sidebar({ currentPage }) {
   const [hoveredItem, setHoveredItem] = useState(null);
+
+  const handleLogout = () => {
+    base44.auth.logout(createPageUrl('Landing'));
+  };
 
   return (
     <div
@@ -150,7 +154,7 @@ export default function Sidebar({ currentPage }) {
         </Link>
 
         <button
-          onClick={() => base44.auth.logout()}
+          onClick={handleLogout}
           onMouseEnter={() => setHoveredItem('Logout')}
           onMouseLeave={() => setHoveredItem(null)}
           style={{
