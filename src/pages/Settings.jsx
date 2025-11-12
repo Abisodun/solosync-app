@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -280,7 +279,6 @@ export default function Settings() {
         currency: currentUser.currency || 'USD'
       });
       
-      // Load dashboard preferences
       if (currentUser.dashboard_preferences) {
         setDashboardPrefs(currentUser.dashboard_preferences);
       }
@@ -306,14 +304,10 @@ export default function Settings() {
   const updateDashboardPrefsMutation = useMutation({
     mutationFn: (prefs) => base44.auth.updateMe({ dashboard_preferences: prefs }),
     onSuccess: () => {
-      // Invalidate the user query to refetch updated dashboard preferences
+      loadUser();
       queryClient.invalidateQueries({ queryKey: ['user'] });
       setSuccessMessage('Dashboard preferences updated!');
       setTimeout(() => setSuccessMessage(''), 3000);
-    },
-    onError: (error) => {
-      console.error('Error updating dashboard preferences:', error);
-      setErrors({ dashboard: error.message || 'Failed to update dashboard preferences' });
     }
   });
 
@@ -449,10 +443,18 @@ export default function Settings() {
           <p className="text-gray-600 mt-1">Manage your account and preferences</p>
         </div>
 
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-[12px]">
+            <p className="text-sm text-green-800 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              {successMessage}
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Settings Column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Subscription Card */}
+            {/* Subscription Card - keeping existing code */}
             <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}>
@@ -584,23 +586,6 @@ export default function Settings() {
                 Choose which widgets to display on your dashboard. Changes are saved automatically.
               </p>
 
-              {successMessage.includes('Dashboard preferences updated!') && (
-                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-[12px]">
-                  <p className="text-sm text-green-800 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    {successMessage}
-                  </p>
-                </div>
-              )}
-              {errors.dashboard && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-[12px]">
-                  <p className="text-sm text-red-800 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.dashboard}
-                  </p>
-                </div>
-              )}
-
               <div className="space-y-4">
                 {dashboardWidgets.map((widget) => (
                   <div key={widget.key} className="flex items-center justify-between p-4 rounded-[12px] bg-gray-50">
@@ -611,7 +596,6 @@ export default function Settings() {
                     <Switch
                       checked={dashboardPrefs[widget.key]}
                       onCheckedChange={(checked) => handleDashboardPrefChange(widget.key, checked)}
-                      disabled={updateDashboardPrefsMutation.isPending}
                     />
                   </div>
                 ))}
@@ -626,15 +610,6 @@ export default function Settings() {
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800">Profile Settings</h2>
               </div>
-
-              {successMessage.includes('Profile updated successfully!') && (
-                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-[12px]">
-                  <p className="text-sm text-green-800 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    {successMessage}
-                  </p>
-                </div>
-              )}
 
               {errors.submit && (
                 <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-[12px]">
