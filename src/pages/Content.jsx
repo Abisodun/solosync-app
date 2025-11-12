@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Calendar as CalendarIcon, Instagram, Youtube, Twitter, Linkedin, TrendingUp, Edit2, List, Grid } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import Sidebar from '../components/common/Sidebar';
 import AIPublishingTips from '../components/content/AIPublishingTips';
 import ContentForm from '../components/content/ContentForm';
@@ -18,20 +18,20 @@ export default function Content() {
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' or 'list'
   const queryClient = useQueryClient();
 
-  const { data: contentItems = [], isLoading } = useQuery({
+  const { data: contentItems = [], isLoading, error } = useQuery({
     queryKey: ['content'],
     queryFn: async () => {
       const result = await base44.entities.ContentItem.list('-scheduled_date', 100);
-      console.log('Fetched content items:', result);
+      console.log('📋 Fetched content items:', result);
       return result;
     },
   });
 
   const createContentMutation = useMutation({
     mutationFn: async (data) => {
-      console.log('Creating content with data:', JSON.stringify(data, null, 2));
+      console.log('➕ Creating content with data:', JSON.stringify(data, null, 2));
       const result = await base44.entities.ContentItem.create(data);
-      console.log('Created content result:', JSON.stringify(result, null, 2));
+      console.log('✅ Created content result:', JSON.stringify(result, null, 2));
       return result;
     },
     onSuccess: () => {
@@ -44,9 +44,9 @@ export default function Content() {
 
   const updateContentMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      console.log('Updating content:', id, JSON.stringify(data, null, 2));
+      console.log('✏️ Updating content:', id, JSON.stringify(data, null, 2));
       const result = await base44.entities.ContentItem.update(id, data);
-      console.log('Updated content result:', JSON.stringify(result, null, 2));
+      console.log('✅ Updated content result:', JSON.stringify(result, null, 2));
       return result;
     },
     onSuccess: () => {
@@ -67,7 +67,7 @@ export default function Content() {
     // Convert datetime-local format to ISO string if needed
     if (finalData.scheduled_date) {
       // If it's in datetime-local format (YYYY-MM-DDTHH:mm), convert to ISO
-      if (finalData.scheduled_date.length === 16) {
+      if (typeof finalData.scheduled_date === 'string' && finalData.scheduled_date.length === 16) {
         // Add seconds and convert to ISO
         finalData.scheduled_date = new Date(finalData.scheduled_date).toISOString();
         console.log('Converted scheduled_date to ISO:', finalData.scheduled_date);
@@ -124,13 +124,38 @@ export default function Content() {
   const publishedCount = contentItems.filter(c => c.status === 'published').length;
   const draftCount = contentItems.filter(c => c.status === 'draft').length;
   
-  console.log('Content stats:', {
+  console.log('📊 Content stats:', {
     total: contentItems.length,
     scheduled: scheduledCount,
     published: publishedCount,
     draft: draftCount,
-    items: contentItems.map(c => ({ id: c.id, title: c.title, status: c.status, scheduled_date: c.scheduled_date }))
+    items: contentItems.map(c => ({ 
+      id: c.id, 
+      title: c.title, 
+      status: c.status, 
+      scheduled_date: c.scheduled_date 
+    }))
   });
+
+  // Show error if query failed
+  if (error) {
+    return (
+      <>
+        <Sidebar currentPage="Content" />
+        <div style={{
+          marginLeft: '260px',
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
+          padding: '32px 24px'
+        }}>
+          <div className="bg-red-50 border border-red-200 rounded-[16px] p-6">
+            <h2 className="text-lg font-bold text-red-800 mb-2">Error loading content</h2>
+            <p className="text-red-700">{error.message}</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -234,107 +259,122 @@ export default function Content() {
         </div>
 
         {/* Loading State */}
-        {isLoading && (
+        {isLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
           </div>
-        )}
+        ) : (
+          <>
+            {/* Calendar View */}
+            {viewMode === 'calendar' && (
+              <ContentCalendar 
+                contentItems={contentItems} 
+                onContentClick={handleContentClick}
+              />
+            )}
 
-        {/* Calendar View */}
-        {!isLoading && viewMode === 'calendar' && (
-          <ContentCalendar 
-            contentItems={contentItems} 
-            onContentClick={handleContentClick}
-          />
-        )}
-
-        {/* List View */}
-        {!isLoading && viewMode === 'list' && (
-          <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-            {contentItems.length === 0 ? (
-              <div className="text-center py-12">
-                <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">No content yet</h3>
-                <p className="text-gray-600 mb-6">Start planning your content strategy</p>
-                <Button 
-                  onClick={() => {
-                    setShowForm(true);
-                    setEditingContent(null);
-                  }} 
-                  className="rounded-[14px] text-white" 
-                  style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
-                  aria-label="Create your first content"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Create First Content
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {contentItems.map((item) => {
-                  const ChannelIcon = channelIcons[item.channel] || CalendarIcon;
-                  const isSelected = selectedContent?.id === item.id;
-                  
-                  return (
-                    <div key={item.id}>
-                      <div 
-                        className="p-4 rounded-[16px] bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                        style={{ border: isSelected ? '2px solid #A78BFA' : 'none' }}
-                        onClick={() => setSelectedContent(isSelected ? null : item)}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-4 flex-1">
-                            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}>
-                              <ChannelIcon className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-gray-800 mb-1">{item.title}</h3>
-                              {item.description && <p className="text-sm text-gray-600 mb-2">{item.description}</p>}
-                              <div className="flex items-center gap-3 text-sm text-gray-500">
-                                <span className="capitalize">{item.type.replace('_', ' ')}</span>
-                                {item.scheduled_date && (
-                                  <>
-                                    <span>•</span>
-                                    <span>📅 {format(parseISO(item.scheduled_date), 'MMM dd, yyyy h:mm a')}</span>
-                                  </>
-                                )}
-                                {item.channel && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="capitalize">{item.channel}</span>
-                                  </>
-                                )}
+            {/* List View */}
+            {viewMode === 'list' && (
+              <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+                {contentItems.length === 0 ? (
+                  <div className="text-center py-12">
+                    <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">No content yet</h3>
+                    <p className="text-gray-600 mb-6">Start planning your content strategy</p>
+                    <Button 
+                      onClick={() => {
+                        setShowForm(true);
+                        setEditingContent(null);
+                      }} 
+                      className="rounded-[14px] text-white" 
+                      style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+                      aria-label="Create your first content"
+                    >
+                      <Plus className="w-5 h-5 mr-2" />
+                      Create First Content
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {contentItems.map((item) => {
+                      const ChannelIcon = channelIcons[item.channel] || CalendarIcon;
+                      const isSelected = selectedContent?.id === item.id;
+                      
+                      return (
+                        <div key={item.id}>
+                          <div 
+                            className="p-4 rounded-[16px] bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                            style={{ border: isSelected ? '2px solid #A78BFA' : 'none' }}
+                            onClick={() => setSelectedContent(isSelected ? null : item)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-4 flex-1">
+                                <div className="w-10 h-10 rounded-[12px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}>
+                                  <ChannelIcon className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <h3 className="font-semibold text-gray-800 mb-1">{item.title}</h3>
+                                  {item.description && <p className="text-sm text-gray-600 mb-2">{item.description}</p>}
+                                  <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
+                                    <span className="capitalize">{item.type.replace('_', ' ')}</span>
+                                    {item.scheduled_date && (
+                                      <>
+                                        <span>•</span>
+                                        <span>📅 {(() => {
+                                          try {
+                                            const date = typeof item.scheduled_date === 'string'
+                                              ? parseISO(item.scheduled_date)
+                                              : item.scheduled_date;
+                                            if (isValid(date)) {
+                                              return format(date, 'MMM dd, yyyy h:mm a');
+                                            }
+                                            return 'Invalid date';
+                                          } catch (error) {
+                                            console.error('Error formatting date:', error);
+                                            return item.scheduled_date;
+                                          }
+                                        })()}</span>
+                                      </>
+                                    )}
+                                    {item.channel && (
+                                      <>
+                                        <span>•</span>
+                                        <span className="capitalize">{item.channel}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-3 py-1 rounded-[8px] text-xs font-semibold ${statusColors[item.status]}`}>
+                                  {item.status}
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(item);
+                                  }}
+                                  className="p-2 hover:bg-gray-200 rounded-[8px] transition-colors"
+                                  aria-label="Edit content"
+                                >
+                                  <Edit2 className="w-4 h-4 text-gray-600" />
+                                </button>
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`px-3 py-1 rounded-[8px] text-xs font-semibold ${statusColors[item.status]}`}>
-                              {item.status}
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEdit(item);
-                              }}
-                              className="p-2 hover:bg-gray-200 rounded-[8px] transition-colors"
-                              aria-label="Edit content"
-                            >
-                              <Edit2 className="w-4 h-4 text-gray-600" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
 
-                      {/* AI Publishing Tips */}
-                      {isSelected && (
-                        <AIPublishingTips contentItem={item} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                          {/* AI Publishing Tips */}
+                          {isSelected && (
+                            <AIPublishingTips contentItem={item} />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </Card>
             )}
-          </Card>
+          </>
         )}
       </div>
     </>

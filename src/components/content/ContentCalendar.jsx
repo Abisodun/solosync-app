@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Instagram, Youtube, Twitter, Linkedin } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO, addMonths, subMonths, startOfWeek, endOfWeek, isValid } from 'date-fns';
 import { motion } from 'framer-motion';
 
 export default function ContentCalendar({ contentItems, onContentClick }) {
@@ -23,16 +23,52 @@ export default function ContentCalendar({ contentItems, onContentClick }) {
   };
 
   const getContentForDay = (day) => {
-    return contentItems.filter(item => {
-      if (!item.scheduled_date) return false;
+    const dayContent = contentItems.filter(item => {
+      if (!item.scheduled_date) {
+        return false;
+      }
+      
       try {
-        const itemDate = parseISO(item.scheduled_date);
-        return isSameDay(itemDate, day);
+        // Try parsing the date
+        let itemDate;
+        
+        // Check if it's already a Date object
+        if (item.scheduled_date instanceof Date) {
+          itemDate = item.scheduled_date;
+        } else if (typeof item.scheduled_date === 'string') {
+          // Try parsing ISO string
+          itemDate = parseISO(item.scheduled_date);
+        } else {
+          console.warn('Invalid date format:', item.scheduled_date);
+          return false;
+        }
+        
+        // Check if date is valid
+        if (!isValid(itemDate)) {
+          console.warn('Invalid date:', item.scheduled_date);
+          return false;
+        }
+        
+        const match = isSameDay(itemDate, day);
+        
+        if (match) {
+          console.log('✅ Found matching content:', {
+            title: item.title,
+            scheduled_date: item.scheduled_date,
+            parsed_date: itemDate.toISOString(),
+            day: day.toISOString(),
+            status: item.status
+          });
+        }
+        
+        return match;
       } catch (error) {
-        console.error('Error parsing date:', item.scheduled_date, error);
+        console.error('Error parsing date for item:', item.title, item.scheduled_date, error);
         return false;
       }
     });
+    
+    return dayContent;
   };
 
   const goToPreviousMonth = () => {
@@ -54,6 +90,18 @@ export default function ContentCalendar({ contentItems, onContentClick }) {
     published: 'bg-green-100 border-green-300',
   };
 
+  // Debug log
+  console.log('📅 Calendar rendering:', {
+    currentMonth: format(currentMonth, 'MMMM yyyy'),
+    totalContentItems: contentItems.length,
+    scheduledItems: contentItems.filter(c => c.scheduled_date).length,
+    contentDates: contentItems.map(c => ({
+      title: c.title,
+      scheduled_date: c.scheduled_date,
+      status: c.status
+    }))
+  });
+
   return (
     <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
       {/* Calendar Header */}
@@ -63,7 +111,7 @@ export default function ContentCalendar({ contentItems, onContentClick }) {
             {format(currentMonth, 'MMMM yyyy')}
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            {contentItems.filter(c => c.scheduled_date).length} scheduled posts
+            {contentItems.filter(c => c.scheduled_date).length} scheduled posts total
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -117,7 +165,7 @@ export default function ContentCalendar({ contentItems, onContentClick }) {
               key={day.toString()}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: index * 0.01 }}
+              transition={{ delay: index * 0.005 }}
               className={`min-h-[100px] p-2 rounded-[12px] border-2 transition-all ${
                 isCurrentMonth ? 'bg-white' : 'bg-gray-50'
               } ${isToday ? 'border-purple-400 bg-purple-50' : 'border-gray-200'}`}
@@ -151,12 +199,22 @@ export default function ContentCalendar({ contentItems, onContentClick }) {
                       <div className="flex items-start gap-1">
                         <ChannelIcon className="w-3 h-3 mt-0.5 text-gray-600 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-gray-800 truncate">
+                          <p className="text-xs font-medium text-gray-800 truncate" title={item.title}>
                             {item.title}
                           </p>
                           {item.scheduled_date && (
                             <p className="text-[10px] text-gray-500">
-                              {format(parseISO(item.scheduled_date), 'h:mm a')}
+                              {(() => {
+                                try {
+                                  const date = typeof item.scheduled_date === 'string' 
+                                    ? parseISO(item.scheduled_date) 
+                                    : item.scheduled_date;
+                                  return format(date, 'h:mm a');
+                                } catch (error) {
+                                  console.error('Error formatting time:', error);
+                                  return '';
+                                }
+                              })()}
                             </p>
                           )}
                         </div>
@@ -176,7 +234,7 @@ export default function ContentCalendar({ contentItems, onContentClick }) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-6 pt-6 border-t border-gray-200">
+      <div className="flex flex-wrap items-center gap-4 mt-6 pt-6 border-t border-gray-200">
         <span className="text-sm text-gray-600 font-semibold">Status:</span>
         {Object.entries(statusColors).map(([status, colors]) => (
           <div key={status} className="flex items-center gap-2">
@@ -185,6 +243,15 @@ export default function ContentCalendar({ contentItems, onContentClick }) {
           </div>
         ))}
       </div>
+
+      {/* Debug Info */}
+      {contentItems.filter(c => c.scheduled_date).length === 0 && (
+        <div className="mt-4 p-4 bg-yellow-50 rounded-[12px] border border-yellow-200">
+          <p className="text-sm text-yellow-800">
+            ℹ️ No scheduled content found. Create a new post with a scheduled date to see it on the calendar.
+          </p>
+        </div>
+      )}
     </Card>
   );
 }
