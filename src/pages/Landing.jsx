@@ -20,15 +20,28 @@ import Logo from '../components/landing/Logo';
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const handleCTAClick = () => {
-    // Redirect to login/signup, then to onboarding after successful auth
-    const onboardingUrl = window.location.origin + createPageUrl('Onboarding');
-    base44.auth.redirectToLogin(onboardingUrl);
+  const handleCTAClick = async () => {
+    // Check if user is already authenticated
+    const isAuth = await base44.auth.isAuthenticated();
+    if (isAuth) {
+      // Already logged in, go to onboarding
+      window.location.href = createPageUrl('Onboarding');
+    } else {
+      // Not logged in, redirect to login with onboarding as next page
+      base44.auth.redirectToLogin();
+    }
   };
 
-  const handleLoginClick = () => {
-    const dashboardUrl = window.location.origin + createPageUrl('Dashboard');
-    base44.auth.redirectToLogin(dashboardUrl);
+  const handleLoginClick = async () => {
+    // Check if user is already authenticated
+    const isAuth = await base44.auth.isAuthenticated();
+    if (isAuth) {
+      // Already logged in, go to dashboard
+      window.location.href = createPageUrl('Dashboard');
+    } else {
+      // Not logged in, redirect to login
+      base44.auth.redirectToLogin();
+    }
   };
 
   const scrollToSection = (sectionId) => {
