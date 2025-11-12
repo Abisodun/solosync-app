@@ -105,11 +105,11 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
           >
-            <span className="bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 bg-clip-text text-transparent">
-              Command Center
-            </span>
+            <span className="text-gray-800">Work. Create. Thrive.</span>
             <br />
-            <span className="text-gray-800">for Freelance Success</span>
+            <span className="bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 bg-clip-text text-transparent">
+              All in One Place
+            </span>
           </motion.h1>
 
           {/* Subtitle */}
