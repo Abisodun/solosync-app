@@ -23,76 +23,80 @@ export default function ContentForm({ content, onSubmit, onCancel }) {
 
   // When editing, convert ISO date back to datetime-local format
   useEffect(() => {
-    if (content && content.scheduled_date) {
-      const date = new Date(content.scheduled_date);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const datetimeLocal = `${year}-${month}-${day}T${hours}:${minutes}`;
+    if (content) {
+      const updatedData = { ...content };
       
-      console.log('Converting scheduled_date for editing:', {
-        original: content.scheduled_date,
-        converted: datetimeLocal
-      });
+      // Convert scheduled_date from ISO to datetime-local format
+      if (content.scheduled_date) {
+        try {
+          const date = new Date(content.scheduled_date);
+          
+          if (!isNaN(date.getTime())) {
+            // Format: YYYY-MM-DDTHH:mm
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            updatedData.scheduled_date = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            console.log('✅ Converted scheduled_date for editing:', {
+              original: content.scheduled_date,
+              converted: updatedData.scheduled_date
+            });
+          } else {
+            console.error('❌ Invalid date when editing:', content.scheduled_date);
+            updatedData.scheduled_date = '';
+          }
+        } catch (error) {
+          console.error('❌ Error converting date for editing:', error);
+          updatedData.scheduled_date = '';
+        }
+      }
       
-      setFormData(prev => ({
-        ...prev,
-        scheduled_date: datetimeLocal
-      }));
+      setFormData(updatedData);
     }
   }, [content]);
-
-  // Auto-update status when scheduled_date changes
-  useEffect(() => {
-    if (formData.scheduled_date) {
-      // If a date is set, automatically change status to "scheduled"
-      if (formData.status === 'idea' || formData.status === 'draft') {
-        console.log('Auto-setting status to scheduled because date was selected');
-        setFormData(prev => ({ ...prev, status: 'scheduled' }));
-      }
-    }
-  }, [formData.scheduled_date]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
     console.log('=== FORM SUBMIT START ===');
-    console.log('Form data before processing:', JSON.stringify(formData, null, 2));
+    console.log('Form data before submission:', JSON.stringify(formData, null, 2));
     
-    // CRITICAL: Ensure status is correct based on scheduled_date before submitting
-    const finalData = { ...formData };
+    // Create clean data object - DO NOT manipulate the scheduled_date here
+    // Let the parent component handle the ISO conversion
+    const submissionData = { ...formData };
     
-    // Validate scheduled_date exists
-    if (!finalData.scheduled_date || finalData.scheduled_date.trim() === '') {
-      console.warn('⚠️ No scheduled_date provided');
-    } else {
-      console.log('✅ scheduled_date is present:', finalData.scheduled_date);
-      
-      // If there's a scheduled date, status MUST be "scheduled"
-      if (finalData.status === 'idea' || finalData.status === 'draft' || !finalData.status) {
-        console.log('Force setting status to scheduled on submit');
-        finalData.status = 'scheduled';
-      }
+    // Ensure status is scheduled if date is set
+    if (submissionData.scheduled_date && submissionData.status !== 'published') {
+      submissionData.status = 'scheduled';
+      console.log('✅ Status set to scheduled');
     }
     
-    console.log('Final form data to parent:', JSON.stringify(finalData, null, 2));
+    console.log('Submitting to parent:', JSON.stringify(submissionData, null, 2));
     console.log('=== FORM SUBMIT END ===');
     
-    onSubmit(finalData);
+    onSubmit(submissionData);
   };
 
   const handleScheduledDateChange = (value) => {
-    console.log('Scheduled date input changed to:', value);
+    console.log('📅 Date input changed:', value);
+    
     setFormData(prev => {
       const newData = {
         ...prev,
-        scheduled_date: value,
-        // Auto-set status to scheduled if a date is selected
+        scheduled_date: value, // Store exactly as received from input
+        // Auto-update status when date is set/cleared
         status: value ? 'scheduled' : (prev.status === 'scheduled' ? 'draft' : prev.status)
       };
-      console.log('Updated form data after date change:', JSON.stringify(newData, null, 2));
+      
+      console.log('Updated form data:', {
+        scheduled_date: newData.scheduled_date,
+        status: newData.status
+      });
+      
       return newData;
     });
   };
@@ -230,27 +234,24 @@ export default function ContentForm({ content, onSubmit, onCancel }) {
             />
             {formData.scheduled_date && (
               <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                ✓ Status will be set to "scheduled" (Date: {formData.scheduled_date})
+                ✓ Will be scheduled for: {formData.scheduled_date}
               </p>
             )}
             {!formData.scheduled_date && (
               <p className="text-xs text-gray-500 mt-1">
-                Select a date to schedule this content
+                Select a date and time to schedule this content
               </p>
             )}
           </div>
 
-          {/* Status - Now read-only when date is set */}
+          {/* Status */}
           <div>
             <label htmlFor="content-status" className="text-sm font-semibold text-gray-700 mb-2 block">
-              Status * {formData.scheduled_date && <span className="text-xs text-gray-500">(auto-set when scheduled)</span>}
+              Status * {formData.scheduled_date && <span className="text-xs text-gray-500">(auto-set to scheduled)</span>}
             </label>
             <Select
               value={formData.status}
-              onValueChange={(value) => {
-                console.log('Status manually changed to:', value);
-                setFormData({ ...formData, status: value });
-              }}
+              onValueChange={(value) => setFormData({ ...formData, status: value })}
             >
               <SelectTrigger id="content-status" className="rounded-[12px]">
                 <SelectValue />
@@ -262,11 +263,6 @@ export default function ContentForm({ content, onSubmit, onCancel }) {
                 <SelectItem value="published">Published</SelectItem>
               </SelectContent>
             </Select>
-            {formData.scheduled_date && formData.status !== 'scheduled' && (
-              <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-                ⚠️ You have a scheduled date but status is not "scheduled"
-              </p>
-            )}
           </div>
 
           {/* Tags */}
@@ -338,8 +334,8 @@ export default function ContentForm({ content, onSubmit, onCancel }) {
           {/* Debug Info */}
           <div className="p-3 bg-gray-50 rounded-[12px] text-xs">
             <p className="font-semibold text-gray-700 mb-1">Debug Info:</p>
-            <p className="text-gray-600">Status: {formData.status}</p>
-            <p className="text-gray-600">Scheduled Date: {formData.scheduled_date || 'Not set'}</p>
+            <p className="text-gray-600">Status: <span className="font-mono">{formData.status}</span></p>
+            <p className="text-gray-600">Scheduled Date: <span className="font-mono">{formData.scheduled_date || 'Not set'}</span></p>
           </div>
 
           {/* Actions */}

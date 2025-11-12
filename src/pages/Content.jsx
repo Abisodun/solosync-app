@@ -64,19 +64,38 @@ export default function Content() {
     // Create a clean copy
     const finalData = { ...data };
     
-    // Convert datetime-local format to ISO string if needed
+    // Handle scheduled_date conversion
     if (finalData.scheduled_date) {
-      // If it's in datetime-local format (YYYY-MM-DDTHH:mm), convert to ISO
-      if (typeof finalData.scheduled_date === 'string' && finalData.scheduled_date.length === 16) {
-        // Add seconds and convert to ISO
-        finalData.scheduled_date = new Date(finalData.scheduled_date).toISOString();
-        console.log('Converted scheduled_date to ISO:', finalData.scheduled_date);
-      }
-      
-      // Ensure status is 'scheduled' when date exists
-      if (finalData.status === 'idea' || finalData.status === 'draft' || !finalData.status) {
-        console.log('Auto-setting status to "scheduled" because scheduled_date exists');
-        finalData.status = 'scheduled';
+      try {
+        // The datetime-local input gives us a string like "2025-11-15T10:00"
+        // We need to convert it to a proper ISO string
+        
+        console.log('Processing scheduled_date:', finalData.scheduled_date);
+        console.log('Type:', typeof finalData.scheduled_date);
+        console.log('Length:', finalData.scheduled_date.length);
+        
+        // Create a Date object from the datetime-local value
+        const dateObj = new Date(finalData.scheduled_date);
+        
+        // Check if date is valid
+        if (isNaN(dateObj.getTime())) {
+          console.error('❌ Invalid date object created from:', finalData.scheduled_date);
+          throw new Error('Invalid date');
+        }
+        
+        // Convert to ISO string
+        finalData.scheduled_date = dateObj.toISOString();
+        console.log('✅ Converted to ISO:', finalData.scheduled_date);
+        
+        // Ensure status is 'scheduled' when date exists
+        if (finalData.status === 'idea' || finalData.status === 'draft' || !finalData.status) {
+          console.log('Auto-setting status to "scheduled" because scheduled_date exists');
+          finalData.status = 'scheduled';
+        }
+      } catch (error) {
+        console.error('❌ Error processing scheduled_date:', error);
+        alert('Error: Invalid date format. Please try again.');
+        return;
       }
     }
     
