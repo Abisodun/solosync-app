@@ -4,8 +4,28 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, CheckCircle2, Circle, TrendingUp, Target, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
 
 export default function HeroSection() {
+  const handleCTAClick = async () => {
+    try {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (isAuth) {
+        const user = await base44.auth.me();
+        if (user.onboarding_completed) {
+          window.location.href = createPageUrl('Dashboard');
+        } else {
+          window.location.href = createPageUrl('Onboarding');
+        }
+      } else {
+        base44.auth.redirectToLogin(createPageUrl('Onboarding'));
+      }
+    } catch (error) {
+      console.error('Error in CTA click:', error);
+      base44.auth.redirectToLogin(createPageUrl('Onboarding'));
+    }
+  };
+
   return (
     <section className="pt-40 pb-20 px-4 md:px-8 relative overflow-hidden">
       {/* Floating Background Elements */}
@@ -111,7 +131,7 @@ export default function HeroSection() {
           >
             <Button
               size="lg"
-              onClick={() => window.location.href = createPageUrl('Onboarding')}
+              onClick={handleCTAClick}
               className="rounded-[18px] px-8 py-6 text-lg font-semibold text-white group"
               style={{
                 background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',

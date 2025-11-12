@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, ArrowRight, Sparkles, Target, DollarSign, Calendar, Heart, LayoutGrid, TrendingUp, Users, Star, Play, Check, Zap, Clock, FileText, BarChart3, LogIn, Menu, X } from 'lucide-react';
+import { CheckCircle2, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -21,26 +19,40 @@ export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleCTAClick = async () => {
-    // Check if user is already authenticated
-    const isAuth = await base44.auth.isAuthenticated();
-    if (isAuth) {
-      // Already logged in, go to onboarding
-      window.location.href = createPageUrl('Onboarding');
-    } else {
-      // Not logged in, redirect to login with onboarding as next page
-      base44.auth.redirectToLogin();
+    try {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (isAuth) {
+        const user = await base44.auth.me();
+        if (user.onboarding_completed) {
+          window.location.href = createPageUrl('Dashboard');
+        } else {
+          window.location.href = createPageUrl('Onboarding');
+        }
+      } else {
+        base44.auth.redirectToLogin(createPageUrl('Onboarding'));
+      }
+    } catch (error) {
+      console.error('Error in CTA click:', error);
+      base44.auth.redirectToLogin(createPageUrl('Onboarding'));
     }
   };
 
   const handleLoginClick = async () => {
-    // Check if user is already authenticated
-    const isAuth = await base44.auth.isAuthenticated();
-    if (isAuth) {
-      // Already logged in, go to dashboard
-      window.location.href = createPageUrl('Dashboard');
-    } else {
-      // Not logged in, redirect to login
-      base44.auth.redirectToLogin();
+    try {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (isAuth) {
+        const user = await base44.auth.me();
+        if (user.onboarding_completed) {
+          window.location.href = createPageUrl('Dashboard');
+        } else {
+          window.location.href = createPageUrl('Onboarding');
+        }
+      } else {
+        base44.auth.redirectToLogin(createPageUrl('Dashboard'));
+      }
+    } catch (error) {
+      console.error('Error in login click:', error);
+      base44.auth.redirectToLogin(createPageUrl('Dashboard'));
     }
   };
 
@@ -188,10 +200,9 @@ export default function Landing() {
                   </button>
                   <button
                     onClick={handleLoginClick}
-                    className="w-full text-left px-4 py-3 text-gray-800 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm flex items-center gap-2"
+                    className="w-full text-left px-4 py-3 text-gray-800 hover:bg-purple-50 hover:text-purple-600 transition-colors font-semibold text-sm"
                     aria-label="Login to your account"
                   >
-                    <LogIn className="w-4 h-4" aria-hidden="true" />
                     Login
                   </button>
                 </div>
