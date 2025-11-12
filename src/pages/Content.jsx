@@ -4,20 +4,48 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Calendar as CalendarIcon, Instagram, Youtube, Twitter, Linkedin, TrendingUp } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import Sidebar from '../components/common/Sidebar';
 import AIPublishingTips from '../components/content/AIPublishingTips';
+import ContentForm from '../components/content/ContentForm';
 
 export default function Content() {
   const [showForm, setShowForm] = useState(false);
   const [selectedContent, setSelectedContent] = useState(null);
+  const [editingContent, setEditingContent] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: contentItems = [], isLoading } = useQuery({
     queryKey: ['content'],
     queryFn: () => base44.entities.ContentItem.list('-scheduled_date', 100),
   });
+
+  const createContentMutation = useMutation({
+    mutationFn: (data) => base44.entities.ContentItem.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['content'] });
+      setShowForm(false);
+      setEditingContent(null);
+    }
+  });
+
+  const updateContentMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.ContentItem.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['content'] });
+      setShowForm(false);
+      setEditingContent(null);
+    }
+  });
+
+  const handleSubmit = (data) => {
+    if (editingContent) {
+      updateContentMutation.mutate({ id: editingContent.id, data });
+    } else {
+      createContentMutation.mutate(data);
+    }
+  };
 
   const channelIcons = {
     instagram: Instagram,
@@ -49,14 +77,33 @@ export default function Content() {
             <p className="text-gray-600 mt-1">Plan and schedule your content across platforms</p>
           </div>
           <Button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditingContent(null);
+              setSelectedContent(null);
+            }}
             className="rounded-[14px] text-white"
             style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+            aria-label="Create new content"
           >
             <Plus className="w-5 h-5 mr-2" />
             New Content
           </Button>
         </div>
+
+        {/* Content Form */}
+        <AnimatePresence>
+          {showForm && (
+            <ContentForm
+              content={editingContent}
+              onSubmit={handleSubmit}
+              onCancel={() => {
+                setShowForm(false);
+                setEditingContent(null);
+              }}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -99,7 +146,15 @@ export default function Content() {
               <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-800 mb-2">No content yet</h3>
               <p className="text-gray-600 mb-6">Start planning your content strategy</p>
-              <Button onClick={() => setShowForm(true)} className="rounded-[14px] text-white" style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}>
+              <Button 
+                onClick={() => {
+                  setShowForm(true);
+                  setEditingContent(null);
+                }} 
+                className="rounded-[14px] text-white" 
+                style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+                aria-label="Create your first content"
+              >
                 <Plus className="w-5 h-5 mr-2" />
                 Create First Content
               </Button>

@@ -72,8 +72,8 @@ export default function Onboarding() {
       const isAuthenticated = await base44.auth.isAuthenticated();
       
       if (!isAuthenticated) {
-        // Not authenticated, redirect to login with onboarding as next URL
-        base44.auth.redirectToLogin(createPageUrl('Onboarding'));
+        // Not authenticated, redirect to landing with a message
+        window.location.href = createPageUrl('Landing');
         return;
       }
 
@@ -87,13 +87,8 @@ export default function Onboarding() {
       }
     } catch (error) {
       console.error('Error loading user:', error);
-      // If there's an auth error, redirect to login
-      if (error.message?.includes('Authentication') || error.message?.includes('401')) {
-        base44.auth.redirectToLogin(createPageUrl('Onboarding'));
-      } else {
-        setError('Failed to load user data. Please refresh the page.');
-        setLoading(false);
-      }
+      // If there's an auth error, redirect to landing
+      window.location.href = createPageUrl('Landing');
     }
   };
 
@@ -114,19 +109,11 @@ export default function Onboarding() {
     setError(null);
     
     try {
-      console.log('Updating user with:', {
-        user_type: selectedRole,
-        workspace_style: selectedStyle,
-        onboarding_completed: true
-      });
-
       await base44.auth.updateMe({
         user_type: selectedRole,
         workspace_style: selectedStyle,
         onboarding_completed: true
       });
-
-      console.log('User updated successfully, redirecting to dashboard...');
 
       // Redirect to dashboard
       window.location.href = createPageUrl('Dashboard');
@@ -206,6 +193,7 @@ export default function Onboarding() {
                         ? '0 20px 60px rgba(167, 139, 250, 0.3)'
                         : '0 8px 32px rgba(167, 139, 250, 0.15)'
                     }}
+                    aria-label={`Select ${role.title} role`}
                   >
                     <div
                       className="w-14 h-14 rounded-[16px] flex items-center justify-center mb-4"
@@ -268,6 +256,7 @@ export default function Onboarding() {
                         ? '0 20px 60px rgba(167, 139, 250, 0.3)'
                         : '0 8px 32px rgba(167, 139, 250, 0.15)'
                     }}
+                    aria-label={`Select ${style.name} workspace style`}
                   >
                     <div
                       className="h-48"
@@ -341,6 +330,7 @@ export default function Onboarding() {
             onClick={() => setStep(step - 1)}
             disabled={step === 1 || savingSetup}
             className="rounded-[16px] px-8"
+            aria-label="Go back to previous step"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back
@@ -366,6 +356,7 @@ export default function Onboarding() {
               background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
               boxShadow: '0 8px 24px rgba(139, 92, 246, 0.3)'
             }}
+            aria-label={step === 2 ? 'Complete setup and go to dashboard' : 'Continue to next step'}
           >
             {savingSetup ? 'Setting up...' : step === 2 ? 'Complete Setup' : 'Continue'}
             {!savingSetup && <ArrowRight className="w-5 h-5 ml-2" />}
