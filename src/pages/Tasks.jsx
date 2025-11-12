@@ -28,9 +28,13 @@ export default function TasksPage() {
 
   const queryClient = useQueryClient();
 
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date', 200)
+    queryFn: async () => {
+      const result = await base44.entities.Task.list('-created_date', 200);
+      console.log('Fetched tasks:', result);
+      return result;
+    }
   });
 
   const createMutation = useMutation({
@@ -42,22 +46,33 @@ export default function TasksPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      console.log('Updating task:', id, data);
+      const result = await base44.entities.Task.update(id, data);
+      console.log('Update result:', result);
+      return result;
+    },
     onSuccess: () => {
+      // Force refetch
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.refetchQueries({ queryKey: ['tasks'] });
       resetForm();
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Task.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.refetchQueries({ queryKey: ['tasks'] });
+    }
   });
 
   const prioritizeMutation = useMutation({
     mutationFn: () => base44.functions.invoke('aiTaskPrioritization'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.refetchQueries({ queryKey: ['tasks'] });
     }
   });
 
@@ -84,7 +99,14 @@ export default function TasksPage() {
 
   const handleStatusToggle = (task) => {
     const newStatus = task.status === 'done' ? 'todo' : task.status === 'todo' ? 'in_progress' : 'done';
-    updateMutation.mutate({ id: task.id, data: { ...task, status: newStatus } });
+    console.log('Toggling status from', task.status, 'to', newStatus);
+    updateMutation.mutate({ 
+      id: task.id, 
+      data: { 
+        ...task, 
+        status: newStatus 
+      } 
+    });
   };
 
   const handleDragEnd = (result) => {
@@ -96,6 +118,7 @@ export default function TasksPage() {
 
     const task = tasks.find(t => t.id === result.draggableId);
     if (task) {
+      console.log('Dragging task to', destination.droppableId);
       updateMutation.mutate({
         id: task.id,
         data: { ...task, status: destination.droppableId }
@@ -114,6 +137,14 @@ export default function TasksPage() {
     in_progress: filteredTasks.filter(t => t.status === 'in_progress'),
     done: filteredTasks.filter(t => t.status === 'done')
   };
+
+  // Debug counts
+  console.log('Task counts:', {
+    todo: tasksByStatus.todo.length,
+    in_progress: tasksByStatus.in_progress.length,
+    done: tasksByStatus.done.length,
+    total: tasks.length
+  });
 
   return (
     <>
@@ -153,7 +184,10 @@ export default function TasksPage() {
         </div>
 
         {/* Quick Add Task */}
-        <QuickAddTask onSuccess={() => queryClient.invalidateQueries({ queryKey: ['tasks'] })} />
+        <QuickAddTask onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          queryClient.refetchQueries({ queryKey: ['tasks'] });
+        }} />
 
         {/* Task Form */}
         <AnimatePresence>
@@ -254,99 +288,113 @@ export default function TasksPage() {
           </Select>
         </div>
 
-        {/* Kanban Board with Drag & Drop */}
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {Object.entries(tasksByStatus).map(([status, statusTasks]) => (
-              <Droppable key={status} droppableId={status}>
-                {(provided, snapshot) => (
-                  <div ref={provided.innerRef} {...provided.droppableProps}>
-                    <div className="mb-4">
-                      <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        {status === 'todo' && <Circle className="w-5 h-5 text-gray-400" />}
-                        {status === 'in_progress' && <Clock className="w-5 h-5 text-blue-500" />}
-                        {status === 'done' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
-                        {status === 'todo' ? 'To Do' : status === 'in_progress' ? 'In Progress' : 'Done'}
-                        <span className="text-sm text-gray-500">({statusTasks.length})</span>
-                      </h3>
-                    </div>
-                    <div className="space-y-3 min-h-[200px]">
-                      {statusTasks.map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                            >
-                              <Card 
-                                className="p-4 rounded-[16px] cursor-pointer hover:shadow-lg transition-all" 
-                                style={{ 
-                                  background: snapshot.isDragging ? 'rgba(167, 139, 250, 0.1)' : 'rgba(255, 255, 255, 0.95)',
-                                  transform: snapshot.isDragging ? 'rotate(2deg)' : 'none'
-                                }}
-                              >
-                                <div className="flex items-start gap-3 mb-3">
-                                  <div {...provided.dragHandleProps} className="mt-1 cursor-grab active:cursor-grabbing">
-                                    <GripVertical className="w-4 h-4 text-gray-400" />
-                                  </div>
-                                  <button onClick={() => handleStatusToggle(task)} className="mt-1">
-                                    {task.status === 'done' ? (
-                                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                                    ) : task.status === 'in_progress' ? (
-                                      <Clock className="w-5 h-5 text-blue-500" />
-                                    ) : (
-                                      <Circle className="w-5 h-5 text-gray-400" />
-                                    )}
-                                  </button>
-                                  <div className="flex-1">
-                                    <h4 className={`font-semibold text-gray-800 ${task.status === 'done' ? 'line-through text-gray-500' : ''}`}>
-                                      {task.title}
-                                    </h4>
-                                    {task.description && (
-                                      <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                                    )}
-                                    {task.project && (
-                                      <div className="text-xs text-purple-600 mt-2">📁 {task.project}</div>
-                                    )}
-                                    {task.ai_priority_score && (
-                                      <div className="text-xs text-orange-600 mt-1 flex items-center gap-1">
-                                        <Sparkles className="w-3 h-3" />
-                                        AI Score: {task.ai_priority_score}/100
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <div className={`px-2 py-1 rounded-[8px] text-xs font-medium ${
-                                    task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                                    task.priority === 'high' ? 'bg-orange-100 text-orange-700' : 
-                                    task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 
-                                    'bg-blue-100 text-blue-700'
-                                  }`}>
-                                    {task.priority}
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button onClick={() => handleEdit(task)} className="p-1 hover:bg-gray-100 rounded">
-                                      <Edit2 className="w-4 h-4 text-gray-600" />
-                                    </button>
-                                    <button onClick={() => deleteMutation.mutate(task.id)} className="p-1 hover:bg-gray-100 rounded">
-                                      <Trash2 className="w-4 h-4 text-red-600" />
-                                    </button>
-                                  </div>
-                                </div>
-                              </Card>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  </div>
-                )}
-              </Droppable>
-            ))}
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
           </div>
-        </DragDropContext>
+        )}
+
+        {/* Kanban Board with Drag & Drop */}
+        {!isLoading && (
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {Object.entries(tasksByStatus).map(([status, statusTasks]) => (
+                <Droppable key={status} droppableId={status}>
+                  {(provided, snapshot) => (
+                    <div ref={provided.innerRef} {...provided.droppableProps}>
+                      <div className="mb-4">
+                        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                          {status === 'todo' && <Circle className="w-5 h-5 text-gray-400" />}
+                          {status === 'in_progress' && <Clock className="w-5 h-5 text-blue-500" />}
+                          {status === 'done' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                          {status === 'todo' ? 'To Do' : status === 'in_progress' ? 'In Progress' : 'Done'}
+                          <span className="text-sm text-gray-500">({statusTasks.length})</span>
+                        </h3>
+                      </div>
+                      <div className="space-y-3 min-h-[200px]">
+                        {statusTasks.map((task, index) => (
+                          <Draggable key={task.id} draggableId={task.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                              >
+                                <Card 
+                                  className="p-4 rounded-[16px] cursor-pointer hover:shadow-lg transition-all" 
+                                  style={{ 
+                                    background: snapshot.isDragging ? 'rgba(167, 139, 250, 0.1)' : 'rgba(255, 255, 255, 0.95)',
+                                    transform: snapshot.isDragging ? 'rotate(2deg)' : 'none'
+                                  }}
+                                >
+                                  <div className="flex items-start gap-3 mb-3">
+                                    <div {...provided.dragHandleProps} className="mt-1 cursor-grab active:cursor-grabbing">
+                                      <GripVertical className="w-4 h-4 text-gray-400" />
+                                    </div>
+                                    <button onClick={() => handleStatusToggle(task)} className="mt-1">
+                                      {task.status === 'done' ? (
+                                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                      ) : task.status === 'in_progress' ? (
+                                        <Clock className="w-5 h-5 text-blue-500" />
+                                      ) : (
+                                        <Circle className="w-5 h-5 text-gray-400" />
+                                      )}
+                                    </button>
+                                    <div className="flex-1">
+                                      <h4 className={`font-semibold text-gray-800 ${task.status === 'done' ? 'line-through text-gray-500' : ''}`}>
+                                        {task.title}
+                                      </h4>
+                                      {task.description && (
+                                        <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+                                      )}
+                                      {task.project && (
+                                        <div className="text-xs text-purple-600 mt-2">📁 {task.project}</div>
+                                      )}
+                                      {task.ai_priority_score && (
+                                        <div className="text-xs text-orange-600 mt-1 flex items-center gap-1">
+                                          <Sparkles className="w-3 h-3" />
+                                          AI Score: {task.ai_priority_score}/100
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <div className={`px-2 py-1 rounded-[8px] text-xs font-medium ${
+                                      task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                                      task.priority === 'high' ? 'bg-orange-100 text-orange-700' : 
+                                      task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 
+                                      'bg-blue-100 text-blue-700'
+                                    }`}>
+                                      {task.priority}
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <button onClick={() => handleEdit(task)} className="p-1 hover:bg-gray-100 rounded">
+                                        <Edit2 className="w-4 h-4 text-gray-600" />
+                                      </button>
+                                      <button onClick={() => deleteMutation.mutate(task.id)} className="p-1 hover:bg-gray-100 rounded">
+                                        <Trash2 className="w-4 h-4 text-red-600" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </Card>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                        {statusTasks.length === 0 && (
+                          <div className="text-center py-8 text-gray-400 text-sm">
+                            No {status === 'todo' ? 'pending' : status === 'in_progress' ? 'active' : 'completed'} tasks
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </Droppable>
+              ))}
+            </div>
+          </DragDropContext>
+        )}
       </div>
     </>
   );

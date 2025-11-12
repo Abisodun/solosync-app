@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Calendar as CalendarIcon, Instagram, Youtube, Twitter, Linkedin, TrendingUp } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Instagram, Youtube, Twitter, Linkedin, TrendingUp, Edit2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import Sidebar from '../components/common/Sidebar';
@@ -18,33 +18,65 @@ export default function Content() {
 
   const { data: contentItems = [], isLoading } = useQuery({
     queryKey: ['content'],
-    queryFn: () => base44.entities.ContentItem.list('-scheduled_date', 100),
+    queryFn: async () => {
+      const result = await base44.entities.ContentItem.list('-scheduled_date', 100);
+      console.log('Fetched content items:', result);
+      return result;
+    },
   });
 
   const createContentMutation = useMutation({
-    mutationFn: (data) => base44.entities.ContentItem.create(data),
+    mutationFn: async (data) => {
+      console.log('Creating content with data:', data);
+      const result = await base44.entities.ContentItem.create(data);
+      console.log('Created content:', result);
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['content'] });
+      queryClient.refetchQueries({ queryKey: ['content'] });
       setShowForm(false);
       setEditingContent(null);
     }
   });
 
   const updateContentMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.ContentItem.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      console.log('Updating content:', id, data);
+      const result = await base44.entities.ContentItem.update(id, data);
+      console.log('Updated content:', result);
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['content'] });
+      queryClient.refetchQueries({ queryKey: ['content'] });
       setShowForm(false);
       setEditingContent(null);
     }
   });
 
   const handleSubmit = (data) => {
-    if (editingContent) {
-      updateContentMutation.mutate({ id: editingContent.id, data });
-    } else {
-      createContentMutation.mutate(data);
+    // Ensure status is set correctly before submission
+    const finalData = { ...data };
+    if (finalData.scheduled_date && !finalData.status) {
+      finalData.status = 'scheduled';
+    } else if (finalData.scheduled_date && finalData.status === 'idea') {
+      finalData.status = 'scheduled';
     }
+    
+    console.log('Submitting content:', finalData);
+    
+    if (editingContent) {
+      updateContentMutation.mutate({ id: editingContent.id, data: finalData });
+    } else {
+      createContentMutation.mutate(finalData);
+    }
+  };
+
+  const handleEdit = (item) => {
+    setEditingContent(item);
+    setShowForm(true);
+    setSelectedContent(null);
   };
 
   const channelIcons = {
@@ -60,6 +92,18 @@ export default function Content() {
     scheduled: 'bg-purple-100 text-purple-700',
     published: 'bg-green-100 text-green-700',
   };
+
+  // Calculate stats with proper filtering
+  const scheduledCount = contentItems.filter(c => c.status === 'scheduled').length;
+  const publishedCount = contentItems.filter(c => c.status === 'published').length;
+  const draftCount = contentItems.filter(c => c.status === 'draft').length;
+  
+  console.log('Content stats:', {
+    total: contentItems.length,
+    scheduled: scheduledCount,
+    published: publishedCount,
+    draft: draftCount
+  });
 
   return (
     <>
@@ -109,9 +153,9 @@ export default function Content() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
             { label: 'Total Content', value: contentItems.length, icon: CalendarIcon, gradient: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' },
-            { label: 'Scheduled', value: contentItems.filter(c => c.status === 'scheduled').length, icon: CalendarIcon, gradient: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' },
-            { label: 'Published', value: contentItems.filter(c => c.status === 'published').length, icon: TrendingUp, gradient: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' },
-            { label: 'Drafts', value: contentItems.filter(c => c.status === 'draft').length, icon: CalendarIcon, gradient: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)' },
+            { label: 'Scheduled', value: scheduledCount, icon: CalendarIcon, gradient: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' },
+            { label: 'Published', value: publishedCount, icon: TrendingUp, gradient: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' },
+            { label: 'Drafts', value: draftCount, icon: CalendarIcon, gradient: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)' },
           ].map((stat, index) => {
             const Icon = stat.icon;
             return (
@@ -185,7 +229,7 @@ export default function Content() {
                               {item.scheduled_date && (
                                 <>
                                   <span>•</span>
-                                  <span>{format(parseISO(item.scheduled_date), 'MMM dd, yyyy')}</span>
+                                  <span>📅 {format(parseISO(item.scheduled_date), 'MMM dd, yyyy h:mm a')}</span>
                                 </>
                               )}
                               {item.channel && (
@@ -197,9 +241,21 @@ export default function Content() {
                             </div>
                           </div>
                         </div>
-                        <span className={`px-3 py-1 rounded-[8px] text-xs font-semibold ${statusColors[item.status]}`}>
-                          {item.status}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-3 py-1 rounded-[8px] text-xs font-semibold ${statusColors[item.status]}`}>
+                            {item.status}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(item);
+                            }}
+                            className="p-2 hover:bg-gray-200 rounded-[8px] transition-colors"
+                            aria-label="Edit content"
+                          >
+                            <Edit2 className="w-4 h-4 text-gray-600" />
+                          </button>
+                        </div>
                       </div>
                     </div>
 
