@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, ArrowRight, Sparkles, Target, DollarSign, Calendar, Heart, LayoutGrid, TrendingUp, Users, Star, Play, Check, Zap, Clock, FileText, BarChart3 } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Sparkles, Target, DollarSign, Calendar, Heart, LayoutGrid, TrendingUp, Users, Star, Play, Check, Zap, Clock, FileText, BarChart3, LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { createPageUrl } from '@/utils'; // Moved from local definition to import
+import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
 import HeroSection from '../components/landing/HeroSection';
 import FeaturesShowcase from '../components/landing/FeaturesShowcase';
 import DayInLifeSection from '../components/landing/DayInLifeSection';
@@ -19,6 +19,7 @@ import Logo from '../components/landing/Logo';
 
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,8 +29,29 @@ export default function Landing() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const authenticated = await base44.auth.isAuthenticated();
+      setIsAuthenticated(authenticated);
+    } catch (error) {
+      setIsAuthenticated(false);
+    }
+  };
+
   const handleCTAClick = () => {
-    window.location.href = createPageUrl('Onboarding');
+    if (isAuthenticated) {
+      window.location.href = createPageUrl('Dashboard');
+    } else {
+      window.location.href = createPageUrl('Onboarding');
+    }
+  };
+
+  const handleLoginClick = () => {
+    base44.auth.redirectToLogin(createPageUrl('Dashboard'));
   };
 
   return (
@@ -54,8 +76,8 @@ export default function Landing() {
           }}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3"> {/* Changed gap-2 to gap-3 */}
-              <Logo className="w-10 h-10" /> {/* Replaced existing logo div with Logo component */}
+            <div className="flex items-center gap-3">
+              <Logo className="w-10 h-10" />
               <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 SoloSync
               </span>
@@ -66,20 +88,32 @@ export default function Landing() {
               <a href="#testimonials" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">Reviews</a>
               <a href="#pricing" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">Pricing</a>
             </div>
-            <Button
-              onClick={handleCTAClick}
-              className="rounded-[14px] px-6 text-white font-medium"
-              style={{
-                background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
-                boxShadow: `
-                  0 4px 16px rgba(139, 92, 246, 0.3),
-                  inset 0 2px 4px rgba(255, 255, 255, 0.3),
-                  inset 0 -2px 4px rgba(0, 0, 0, 0.1)
-                `
-              }}
-            >
-              Start Free Trial
-            </Button>
+            <div className="flex items-center gap-3">
+              {!isAuthenticated && (
+                <Button
+                  onClick={handleLoginClick}
+                  variant="outline"
+                  className="rounded-[14px] px-6 font-medium"
+                >
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Log In
+                </Button>
+              )}
+              <Button
+                onClick={handleCTAClick}
+                className="rounded-[14px] px-6 text-white font-medium"
+                style={{
+                  background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
+                  boxShadow: `
+                    0 4px 16px rgba(139, 92, 246, 0.3),
+                    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                    inset 0 -2px 4px rgba(0, 0, 0, 0.1)
+                  `
+                }}
+              >
+                {isAuthenticated ? 'Go to Dashboard' : 'Start Free Trial'}
+              </Button>
+            </div>
           </div>
         </div>
       </motion.nav>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
@@ -72,7 +71,7 @@ export default function Onboarding() {
       setUser(currentUser);
       
       // If already onboarded, redirect to dashboard
-      if (currentUser.onboarded) {
+      if (currentUser.onboarding_completed) {
         window.location.href = createPageUrl('Dashboard');
       }
     } catch (error) {
@@ -83,11 +82,11 @@ export default function Onboarding() {
   const handleComplete = async () => {
     setLoading(true);
     try {
-      // Update user profile
+      // Update user profile with onboarding_completed flag
       await base44.auth.updateMe({
         user_type: selectedRole,
         workspace_style: selectedStyle,
-        onboarded: true
+        onboarding_completed: true
       });
 
       // Create sample data if selected
