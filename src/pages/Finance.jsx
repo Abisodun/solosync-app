@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, TrendingUp, Target } from 'lucide-react';
+import { Plus, FileText, TrendingUp, Target, Repeat } from 'lucide-react'; // Added Repeat icon
 import { AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card } from "@/components/ui/card";
@@ -20,15 +21,19 @@ import BudgetProgress from '../components/finance/BudgetProgress';
 import BudgetAlerts from '../components/finance/BudgetAlerts';
 import BudgetOverview from '../components/finance/BudgetOverview';
 import Sidebar from '../components/common/Sidebar';
+import RecurringTransactionForm from '../components/finance/RecurringTransactionForm'; // New import
+import RecurringTransactionsList from '../components/finance/RecurringTransactionsList'; // New import
 
 export default function Finance() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [showBudgetForm, setShowBudgetForm] = useState(false);
+  const [showRecurringForm, setShowRecurringForm] = useState(false); // New state
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [editingBudget, setEditingBudget] = useState(null);
+  const [editingRecurring, setEditingRecurring] = useState(null); // New state
   const [viewingInvoice, setViewingInvoice] = useState(null);
   const [user, setUser] = useState(null);
 
@@ -79,6 +84,22 @@ export default function Finance() {
         return await base44.entities.Budget.list('-created_date', 100);
       } catch (error) {
         console.error('Error loading budgets:', error);
+        return [];
+      }
+    }
+  });
+
+  // Add query for recurring transactions
+  const { data: recurringTransactions = [] } = useQuery({
+    queryKey: ['recurring-transactions'],
+    queryFn: async () => {
+      try {
+        return await base44.entities.Transaction.filter({
+          is_template: true,
+          is_recurring: true
+        });
+      } catch (error) {
+        console.error('Error loading recurring transactions:', error);
         return [];
       }
     }
@@ -200,6 +221,49 @@ export default function Finance() {
     }
   });
 
+  // Add mutations for recurring transactions
+  const createRecurringMutation = useMutation({
+    mutationFn: (data) => base44.entities.Transaction.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recurring-transactions'] });
+      resetRecurringForm();
+    },
+    onError: (error) => {
+      console.error('Error creating recurring transaction:', error);
+      alert('Failed to create recurring transaction. Please try again.');
+    }
+  });
+
+  const updateRecurringMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Transaction.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recurring-transactions'] });
+      resetRecurringForm();
+    },
+    onError: (error) => {
+      console.error('Error updating recurring transaction:', error);
+      alert('Failed to update recurring transaction. Please try again.');
+    }
+  });
+
+  const deleteRecurringMutation = useMutation({
+    mutationFn: (id) => base44.entities.Transaction.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recurring-transactions'] }),
+    onError: (error) => {
+      console.error('Error deleting recurring transaction:', error);
+      alert('Failed to delete recurring transaction. Please try again.');
+    }
+  });
+
+  const toggleRecurringActiveMutation = useMutation({
+    mutationFn: ({ id, isPaused }) => base44.entities.Transaction.update(id, { is_paused: isPaused }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recurring-transactions'] }),
+    onError: (error) => {
+      console.error('Error toggling recurring transaction:', error);
+      alert('Failed to update recurring transaction. Please try again.');
+    }
+  });
+
   const resetTransactionForm = () => {
     setEditingTransaction(null);
     setShowTransactionForm(false);
@@ -213,6 +277,12 @@ export default function Finance() {
   const resetBudgetForm = () => {
     setEditingBudget(null);
     setShowBudgetForm(false);
+  };
+
+  // Add reset function for recurring form
+  const resetRecurringForm = () => {
+    setEditingRecurring(null);
+    setShowRecurringForm(false);
   };
 
   const handleTransactionSubmit = async (data) => {
@@ -239,11 +309,21 @@ export default function Finance() {
     }
   };
 
+  // Add handlers for recurring transactions
+  const handleRecurringSubmit = async (data) => {
+    if (editingRecurring) {
+      await updateRecurringMutation.mutateAsync({ id: editingRecurring.id, data });
+    } else {
+      await createRecurringMutation.mutateAsync(data);
+    }
+  };
+
   const handleEditTransaction = (transaction) => {
     setEditingTransaction(transaction);
     setShowTransactionForm(true);
     setShowInvoiceForm(false);
     setShowBudgetForm(false);
+    setShowRecurringForm(false); // Close recurring form
   };
 
   const handleEditInvoice = (invoice) => {
@@ -251,6 +331,7 @@ export default function Finance() {
     setShowInvoiceForm(true);
     setShowTransactionForm(false);
     setShowBudgetForm(false);
+    setShowRecurringForm(false); // Close recurring form
     setActiveTab('invoices');
   };
 
@@ -259,7 +340,24 @@ export default function Finance() {
     setShowBudgetForm(true);
     setShowTransactionForm(false);
     setShowInvoiceForm(false);
+    setShowRecurringForm(false); // Close recurring form
     setActiveTab('budgets');
+  };
+
+  const handleEditRecurring = (transaction) => {
+    setEditingRecurring(transaction);
+    setShowRecurringForm(true);
+    setShowTransactionForm(false);
+    setShowInvoiceForm(false);
+    setShowBudgetForm(false);
+    setActiveTab('recurring');
+  };
+
+  const handleToggleRecurringActive = async (transaction) => {
+    await toggleRecurringActiveMutation.mutateAsync({
+      id: transaction.id,
+      isPaused: !transaction.is_paused
+    });
   };
 
   const handleInvoiceStatusChange = async (invoiceId, newStatus) => {
@@ -322,12 +420,13 @@ export default function Finance() {
             <h1 className="text-3xl font-bold text-gray-800">Finance Tracker</h1>
             <p className="text-gray-600 mt-1">Manage income, expenses, budgets & invoices</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <Button
               onClick={() => {
                 setShowTransactionForm(!showTransactionForm);
                 setShowInvoiceForm(false);
                 setShowBudgetForm(false);
+                setShowRecurringForm(false); // Close recurring form
                 setEditingTransaction(null);
               }}
               className="rounded-[14px] text-white"
@@ -338,14 +437,30 @@ export default function Finance() {
             </Button>
             <Button
               onClick={() => {
+                setShowRecurringForm(!showRecurringForm);
+                setShowTransactionForm(false);
+                setShowInvoiceForm(false);
+                setShowBudgetForm(false);
+                setEditingRecurring(null);
+                setActiveTab('recurring');
+              }}
+              className="rounded-[14px] text-white"
+              style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+            >
+              <Repeat className="w-5 h-5 mr-2" />
+              Recurring
+            </Button>
+            <Button
+              onClick={() => {
                 setShowBudgetForm(!showBudgetForm);
                 setShowTransactionForm(false);
                 setShowInvoiceForm(false);
+                setShowRecurringForm(false); // Close recurring form
                 setEditingBudget(null);
                 setActiveTab('budgets');
               }}
               className="rounded-[14px] text-white"
-              style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+              style={{ background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)' }}
             >
               <Target className="w-5 h-5 mr-2" />
               Budget
@@ -355,6 +470,7 @@ export default function Finance() {
                 setShowInvoiceForm(!showInvoiceForm);
                 setShowTransactionForm(false);
                 setShowBudgetForm(false);
+                setShowRecurringForm(false); // Close recurring form
                 setEditingInvoice(null);
                 setActiveTab('invoices');
               }}
@@ -378,6 +494,7 @@ export default function Finance() {
         <div className="flex gap-2 mb-8 overflow-x-auto">
           {[
             { id: 'overview', label: 'Overview', icon: TrendingUp },
+            { id: 'recurring', label: 'Recurring', icon: Repeat }, // New tab
             { id: 'budgets', label: 'Budgets', icon: Target },
             { id: 'invoices', label: 'Invoices', icon: FileText }
           ].map(tab => {
@@ -403,7 +520,7 @@ export default function Finance() {
           })}
         </div>
 
-        {/* Transaction Form */}
+        {/* Forms */}
         <AnimatePresence>
           {showTransactionForm && (
             <TransactionForm
@@ -412,10 +529,6 @@ export default function Finance() {
               onCancel={resetTransactionForm}
             />
           )}
-        </AnimatePresence>
-
-        {/* Invoice Form */}
-        <AnimatePresence>
           {showInvoiceForm && (
             <InvoiceForm
               invoice={editingInvoice}
@@ -423,15 +536,18 @@ export default function Finance() {
               onCancel={resetInvoiceForm}
             />
           )}
-        </AnimatePresence>
-
-        {/* Budget Form */}
-        <AnimatePresence>
           {showBudgetForm && (
             <BudgetForm
               budget={editingBudget}
               onSubmit={handleBudgetSubmit}
               onCancel={resetBudgetForm}
+            />
+          )}
+          {showRecurringForm && ( // New Recurring Form
+            <RecurringTransactionForm
+              transaction={editingRecurring}
+              onSubmit={handleRecurringSubmit}
+              onCancel={resetRecurringForm}
             />
           )}
         </AnimatePresence>
@@ -504,6 +620,16 @@ export default function Finance() {
               currency={user?.currency}
             />
           </>
+        )}
+
+        {activeTab === 'recurring' && ( // New Recurring tab content
+          <RecurringTransactionsList
+            transactions={recurringTransactions}
+            onEdit={handleEditRecurring}
+            onDelete={(id) => deleteRecurringMutation.mutate(id)}
+            onToggleActive={handleToggleRecurringActive}
+            currency={user?.currency}
+          />
         )}
 
         {activeTab === 'budgets' && (
