@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, TrendingUp, Target, Repeat } from 'lucide-react'; // Added Repeat icon
+import { Plus, FileText, TrendingUp, Target, Repeat } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card } from "@/components/ui/card";
@@ -21,19 +20,19 @@ import BudgetProgress from '../components/finance/BudgetProgress';
 import BudgetAlerts from '../components/finance/BudgetAlerts';
 import BudgetOverview from '../components/finance/BudgetOverview';
 import Sidebar from '../components/common/Sidebar';
-import RecurringTransactionForm from '../components/finance/RecurringTransactionForm'; // New import
-import RecurringTransactionsList from '../components/finance/RecurringTransactionsList'; // New import
+import RecurringTransactionForm from '../components/finance/RecurringTransactionForm';
+import RecurringTransactionsList from '../components/finance/RecurringTransactionsList';
 
 export default function Finance() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [showBudgetForm, setShowBudgetForm] = useState(false);
-  const [showRecurringForm, setShowRecurringForm] = useState(false); // New state
+  const [showRecurringForm, setShowRecurringForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [editingBudget, setEditingBudget] = useState(null);
-  const [editingRecurring, setEditingRecurring] = useState(null); // New state
+  const [editingRecurring, setEditingRecurring] = useState(null);
   const [viewingInvoice, setViewingInvoice] = useState(null);
   const [user, setUser] = useState(null);
 
@@ -55,9 +54,11 @@ export default function Finance() {
     queryKey: ['transactions'],
     queryFn: async () => {
       try {
-        const result = await base44.entities.Transaction.list('-date', 200);
+        const result = await base44.entities.Transaction.filter({
+          is_template: false
+        });
         console.log('📊 Loaded transactions:', result.length);
-        return result;
+        return result.sort((a, b) => new Date(b.date) - new Date(a.date));
       } catch (error) {
         console.error('Error loading transactions:', error);
         return [];
@@ -81,7 +82,9 @@ export default function Finance() {
     queryKey: ['budgets'],
     queryFn: async () => {
       try {
-        return await base44.entities.Budget.list('-created_date', 100);
+        const result = await base44.entities.Budget.list('-created_date', 100);
+        console.log('💰 Loaded budgets:', result.length);
+        return result;
       } catch (error) {
         console.error('Error loading budgets:', error);
         return [];
@@ -89,15 +92,16 @@ export default function Finance() {
     }
   });
 
-  // Add query for recurring transactions
-  const { data: recurringTransactions = [] } = useQuery({
+  const { data: recurringTransactions = [], isLoading: recurringLoading } = useQuery({
     queryKey: ['recurring-transactions'],
     queryFn: async () => {
       try {
-        return await base44.entities.Transaction.filter({
+        const result = await base44.entities.Transaction.filter({
           is_template: true,
           is_recurring: true
         });
+        console.log('🔄 Loaded recurring transactions:', result.length, result);
+        return result;
       } catch (error) {
         console.error('Error loading recurring transactions:', error);
         return [];
@@ -105,8 +109,9 @@ export default function Finance() {
     }
   });
 
-  // Filter transactions for current month
+  // Filter transactions for current month (exclude templates)
   const currentMonthTransactions = transactions.filter(t => {
+    if (t.is_template) return false;
     const transDate = new Date(t.date);
     const now = new Date();
     const monthStart = startOfMonth(now);
@@ -120,7 +125,9 @@ export default function Finance() {
 
   const createTransactionMutation = useMutation({
     mutationFn: async (data) => {
+      console.log('Creating transaction:', data);
       const result = await base44.entities.Transaction.create(data);
+      console.log('Transaction created:', result);
       return result;
     },
     onSuccess: () => {
@@ -189,7 +196,12 @@ export default function Finance() {
   });
 
   const createBudgetMutation = useMutation({
-    mutationFn: (data) => base44.entities.Budget.create(data),
+    mutationFn: async (data) => {
+      console.log('Creating budget:', data);
+      const result = await base44.entities.Budget.create(data);
+      console.log('Budget created:', result);
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       resetBudgetForm();
@@ -221,9 +233,13 @@ export default function Finance() {
     }
   });
 
-  // Add mutations for recurring transactions
   const createRecurringMutation = useMutation({
-    mutationFn: (data) => base44.entities.Transaction.create(data),
+    mutationFn: async (data) => {
+      console.log('Creating recurring transaction:', data);
+      const result = await base44.entities.Transaction.create(data);
+      console.log('Recurring transaction created:', result);
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurring-transactions'] });
       resetRecurringForm();
@@ -235,7 +251,12 @@ export default function Finance() {
   });
 
   const updateRecurringMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Transaction.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      console.log('Updating recurring transaction:', id, data);
+      const result = await base44.entities.Transaction.update(id, data);
+      console.log('Recurring transaction updated:', result);
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurring-transactions'] });
       resetRecurringForm();
@@ -279,7 +300,6 @@ export default function Finance() {
     setShowBudgetForm(false);
   };
 
-  // Add reset function for recurring form
   const resetRecurringForm = () => {
     setEditingRecurring(null);
     setShowRecurringForm(false);
@@ -309,7 +329,6 @@ export default function Finance() {
     }
   };
 
-  // Add handlers for recurring transactions
   const handleRecurringSubmit = async (data) => {
     if (editingRecurring) {
       await updateRecurringMutation.mutateAsync({ id: editingRecurring.id, data });
@@ -323,7 +342,7 @@ export default function Finance() {
     setShowTransactionForm(true);
     setShowInvoiceForm(false);
     setShowBudgetForm(false);
-    setShowRecurringForm(false); // Close recurring form
+    setShowRecurringForm(false);
   };
 
   const handleEditInvoice = (invoice) => {
@@ -331,7 +350,7 @@ export default function Finance() {
     setShowInvoiceForm(true);
     setShowTransactionForm(false);
     setShowBudgetForm(false);
-    setShowRecurringForm(false); // Close recurring form
+    setShowRecurringForm(false);
     setActiveTab('invoices');
   };
 
@@ -340,7 +359,7 @@ export default function Finance() {
     setShowBudgetForm(true);
     setShowTransactionForm(false);
     setShowInvoiceForm(false);
-    setShowRecurringForm(false); // Close recurring form
+    setShowRecurringForm(false);
     setActiveTab('budgets');
   };
 
@@ -371,14 +390,14 @@ export default function Finance() {
   };
 
   // Calculate stats
-  const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-  const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const totalIncome = transactions.filter(t => t.type === 'income' && !t.is_template).reduce((sum, t) => sum + t.amount, 0);
+  const totalExpenses = transactions.filter(t => t.type === 'expense' && !t.is_template).reduce((sum, t) => sum + t.amount, 0);
   const netProfit = totalIncome - totalExpenses;
   const unpaidInvoices = invoices.filter(i => i.status === 'sent' || i.status === 'overdue');
   const unpaidAmount = unpaidInvoices.reduce((sum, i) => sum + i.amount, 0);
 
   // Chart data
-  const monthlyData = transactions.reduce((acc, t) => {
+  const monthlyData = transactions.filter(t => !t.is_template).reduce((acc, t) => {
     const month = format(new Date(t.date), 'MMM yyyy');
     if (!acc[month]) acc[month] = { month, income: 0, expenses: 0 };
     if (t.type === 'income') acc[month].income += t.amount;
@@ -387,7 +406,7 @@ export default function Finance() {
   }, {});
   const chartData = Object.values(monthlyData).slice(-6);
 
-  const categoryData = transactions.reduce((acc, t) => {
+  const categoryData = transactions.filter(t => !t.is_template).reduce((acc, t) => {
     if (!acc[t.category]) acc[t.category] = 0;
     acc[t.category] += t.amount;
     return acc;
@@ -426,7 +445,7 @@ export default function Finance() {
                 setShowTransactionForm(!showTransactionForm);
                 setShowInvoiceForm(false);
                 setShowBudgetForm(false);
-                setShowRecurringForm(false); // Close recurring form
+                setShowRecurringForm(false);
                 setEditingTransaction(null);
               }}
               className="rounded-[14px] text-white"
@@ -455,7 +474,7 @@ export default function Finance() {
                 setShowBudgetForm(!showBudgetForm);
                 setShowTransactionForm(false);
                 setShowInvoiceForm(false);
-                setShowRecurringForm(false); // Close recurring form
+                setShowRecurringForm(false);
                 setEditingBudget(null);
                 setActiveTab('budgets');
               }}
@@ -470,7 +489,7 @@ export default function Finance() {
                 setShowInvoiceForm(!showInvoiceForm);
                 setShowTransactionForm(false);
                 setShowBudgetForm(false);
-                setShowRecurringForm(false); // Close recurring form
+                setShowRecurringForm(false);
                 setEditingInvoice(null);
                 setActiveTab('invoices');
               }}
@@ -494,7 +513,7 @@ export default function Finance() {
         <div className="flex gap-2 mb-8 overflow-x-auto">
           {[
             { id: 'overview', label: 'Overview', icon: TrendingUp },
-            { id: 'recurring', label: 'Recurring', icon: Repeat }, // New tab
+            { id: 'recurring', label: 'Recurring', icon: Repeat },
             { id: 'budgets', label: 'Budgets', icon: Target },
             { id: 'invoices', label: 'Invoices', icon: FileText }
           ].map(tab => {
@@ -503,7 +522,7 @@ export default function Finance() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-[14px] font-medium transition-all ${
+                className={`flex items-center gap-2 px-6 py-3 rounded-[14px] font-medium transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'text-white'
                     : 'text-gray-600 hover:bg-gray-100'
@@ -543,7 +562,7 @@ export default function Finance() {
               onCancel={resetBudgetForm}
             />
           )}
-          {showRecurringForm && ( // New Recurring Form
+          {showRecurringForm && (
             <RecurringTransactionForm
               transaction={editingRecurring}
               onSubmit={handleRecurringSubmit}
@@ -568,7 +587,7 @@ export default function Finance() {
 
             {/* AI Financial Forecast Section */}
             <div className="mb-8">
-              <AIForecast transactions={transactions} user={user} />
+              <AIForecast transactions={transactions.filter(t => !t.is_template)} user={user} />
             </div>
 
             {/* Charts */}
@@ -622,7 +641,7 @@ export default function Finance() {
           </>
         )}
 
-        {activeTab === 'recurring' && ( // New Recurring tab content
+        {activeTab === 'recurring' && (
           <RecurringTransactionsList
             transactions={recurringTransactions}
             onEdit={handleEditRecurring}
