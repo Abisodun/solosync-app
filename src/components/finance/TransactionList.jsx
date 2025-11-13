@@ -3,7 +3,12 @@ import { Card } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Edit2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
-export default function TransactionList({ transactions, onEdit, onDelete }) {
+export default function TransactionList({ transactions, onEdit, onDelete, currency = 'USD' }) {
+  const formatCurrency = (amount) => {
+    const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
+    return `${symbol}${amount.toLocaleString()}`;
+  };
+
   if (!transactions || transactions.length === 0) {
     return (
       <Card className="p-8 rounded-[20px] text-center" style={{ background: 'rgba(255, 255, 255, 0.95)' }}>
@@ -43,7 +48,7 @@ export default function TransactionList({ transactions, onEdit, onDelete }) {
                 </div>
               </div>
               <div className={`text-lg font-bold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
+                {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
               </div>
               <div className="flex gap-2">
                 <button
