@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, TrendingUp } from 'lucide-react';
+import { Plus, FileText, TrendingUp, Target } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card } from "@/components/ui/card";
@@ -15,14 +15,19 @@ import InvoiceForm from '../components/finance/InvoiceForm';
 import InvoiceList from '../components/finance/InvoiceList';
 import InvoiceView from '../components/finance/InvoiceView';
 import InvoiceStats from '../components/finance/InvoiceStats';
+import BudgetForm from '../components/finance/BudgetForm';
+import BudgetList from '../components/finance/BudgetList';
+import BudgetAlerts from '../components/finance/BudgetAlerts';
 import Sidebar from '../components/common/Sidebar';
 
 export default function Finance() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
+  const [showBudgetForm, setShowBudgetForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [editingInvoice, setEditingInvoice] = useState(null);
+  const [editingBudget, setEditingBudget] = useState(null);
   const [viewingInvoice, setViewingInvoice] = useState(null);
   const [user, setUser] = useState(null);
 
@@ -44,16 +49,7 @@ export default function Finance() {
     queryKey: ['transactions'],
     queryFn: async () => {
       try {
-        const result = await base44.entities.Transaction.list('-date', 200);
-        console.log('📊 Loaded transactions:', result.length);
-        console.log('💰 Transaction details:', result.map(t => ({
-          id: t.id,
-          description: t.description,
-          amount: t.amount,
-          type: t.type,
-          date: t.date
-        })));
-        return result;
+        return await base44.entities.Transaction.list('-date', 200);
       } catch (error) {
         console.error('Error loading transactions:', error);
         return [];
@@ -73,13 +69,20 @@ export default function Finance() {
     }
   });
 
+  const { data: budgets = [], isLoading: budgetsLoading } = useQuery({
+    queryKey: ['budgets'],
+    queryFn: async () => {
+      try {
+        return await base44.entities.Budget.list('-month', 100);
+      } catch (error) {
+        console.error('Error loading budgets:', error);
+        return [];
+      }
+    }
+  });
+
   const createTransactionMutation = useMutation({
-    mutationFn: async (data) => {
-      console.log('➕ Creating transaction:', data);
-      const result = await base44.entities.Transaction.create(data);
-      console.log('✅ Transaction created:', result);
-      return result;
-    },
+    mutationFn: (data) => base44.entities.Transaction.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       resetTransactionForm();
@@ -95,20 +98,12 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       resetTransactionForm();
-    },
-    onError: (error) => {
-      console.error('Error updating transaction:', error);
-      alert('Failed to update transaction. Please try again.');
     }
   });
 
   const deleteTransactionMutation = useMutation({
     mutationFn: (id) => base44.entities.Transaction.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
-    onError: (error) => {
-      console.error('Error deleting transaction:', error);
-      alert('Failed to delete transaction. Please try again.');
-    }
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] })
   });
 
   const createInvoiceMutation = useMutation({
@@ -116,10 +111,6 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       resetInvoiceForm();
-    },
-    onError: (error) => {
-      console.error('Error creating invoice:', error);
-      alert('Failed to create invoice. Please try again.');
     }
   });
 
@@ -129,20 +120,37 @@ export default function Finance() {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       resetInvoiceForm();
       setViewingInvoice(null);
-    },
-    onError: (error) => {
-      console.error('Error updating invoice:', error);
-      alert('Failed to update invoice. Please try again.');
     }
   });
 
   const deleteInvoiceMutation = useMutation({
     mutationFn: (id) => base44.entities.Invoice.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['invoices'] })
+  });
+
+  const createBudgetMutation = useMutation({
+    mutationFn: (data) => base44.entities.Budget.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      resetBudgetForm();
+    },
     onError: (error) => {
-      console.error('Error deleting invoice:', error);
-      alert('Failed to delete invoice. Please try again.');
+      console.error('Error creating budget:', error);
+      alert('Failed to create budget. Please try again.');
     }
+  });
+
+  const updateBudgetMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Budget.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      resetBudgetForm();
+    }
+  });
+
+  const deleteBudgetMutation = useMutation({
+    mutationFn: (id) => base44.entities.Budget.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['budgets'] })
   });
 
   const resetTransactionForm = () => {
@@ -153,6 +161,11 @@ export default function Finance() {
   const resetInvoiceForm = () => {
     setEditingInvoice(null);
     setShowInvoiceForm(false);
+  };
+
+  const resetBudgetForm = () => {
+    setEditingBudget(null);
+    setShowBudgetForm(false);
   };
 
   const handleTransactionSubmit = async (data) => {
@@ -171,17 +184,35 @@ export default function Finance() {
     }
   };
 
+  const handleBudgetSubmit = async (data) => {
+    if (editingBudget) {
+      await updateBudgetMutation.mutateAsync({ id: editingBudget.id, data });
+    } else {
+      await createBudgetMutation.mutateAsync(data);
+    }
+  };
+
   const handleEditTransaction = (transaction) => {
     setEditingTransaction(transaction);
     setShowTransactionForm(true);
     setShowInvoiceForm(false);
+    setShowBudgetForm(false);
   };
 
   const handleEditInvoice = (invoice) => {
     setEditingInvoice(invoice);
     setShowInvoiceForm(true);
     setShowTransactionForm(false);
+    setShowBudgetForm(false);
     setActiveTab('invoices');
+  };
+
+  const handleEditBudget = (budget) => {
+    setEditingBudget(budget);
+    setShowBudgetForm(true);
+    setShowTransactionForm(false);
+    setShowInvoiceForm(false);
+    setActiveTab('budgets');
   };
 
   const handleInvoiceStatusChange = async (invoiceId, newStatus) => {
@@ -194,22 +225,12 @@ export default function Finance() {
     }
   };
 
-  // Calculate stats with detailed logging
+  // Calculate stats
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const netProfit = totalIncome - totalExpenses;
   const unpaidInvoices = invoices.filter(i => i.status === 'sent' || i.status === 'overdue');
   const unpaidAmount = unpaidInvoices.reduce((sum, i) => sum + i.amount, 0);
-
-  // Log calculations
-  console.log('💵 Finance Stats Calculation:', {
-    totalTransactions: transactions.length,
-    incomeTransactions: transactions.filter(t => t.type === 'income').length,
-    expenseTransactions: transactions.filter(t => t.type === 'expense').length,
-    totalIncome,
-    totalExpenses,
-    netProfit: `${totalIncome} - ${totalExpenses} = ${netProfit}`
-  });
 
   // Chart data
   const monthlyData = transactions.reduce((acc, t) => {
@@ -230,7 +251,13 @@ export default function Finance() {
 
   const COLORS = ['#A78BFA', '#93C5FD', '#86EFAC', '#FCD34D', '#F472B6', '#34D399'];
 
-  if (transactionsLoading || invoicesLoading) {
+  // Get existing budget categories for the current month
+  const currentMonth = format(new Date(), 'yyyy-MM');
+  const existingCategories = budgets
+    .filter(b => b.month === currentMonth)
+    .map(b => b.category);
+
+  if (transactionsLoading || invoicesLoading || budgetsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
@@ -252,32 +279,46 @@ export default function Finance() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Finance Tracker</h1>
-            <p className="text-gray-600 mt-1">Manage income, expenses & invoices</p>
+            <p className="text-gray-600 mt-1">Manage income, expenses, budgets & invoices</p>
           </div>
           <div className="flex gap-3">
             <Button
               onClick={() => {
                 setShowTransactionForm(!showTransactionForm);
                 setShowInvoiceForm(false);
+                setShowBudgetForm(false);
                 setEditingTransaction(null);
               }}
               className="rounded-[14px] text-white"
               style={{ background: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' }}
-              aria-label="Add new transaction"
             >
               <Plus className="w-5 h-5 mr-2" />
               Transaction
             </Button>
             <Button
               onClick={() => {
+                setShowBudgetForm(!showBudgetForm);
+                setShowTransactionForm(false);
+                setShowInvoiceForm(false);
+                setEditingBudget(null);
+                setActiveTab('budgets');
+              }}
+              className="rounded-[14px] text-white"
+              style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+            >
+              <Target className="w-5 h-5 mr-2" />
+              Budget
+            </Button>
+            <Button
+              onClick={() => {
                 setShowInvoiceForm(!showInvoiceForm);
                 setShowTransactionForm(false);
+                setShowBudgetForm(false);
                 setEditingInvoice(null);
                 setActiveTab('invoices');
               }}
               className="rounded-[14px] text-white"
               style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}
-              aria-label="Create new invoice"
             >
               <FileText className="w-5 h-5 mr-2" />
               Invoice
@@ -285,10 +326,14 @@ export default function Finance() {
           </div>
         </div>
 
+        {/* Budget Alerts */}
+        <BudgetAlerts budgets={budgets} transactions={transactions} currency={user?.currency} />
+
         {/* Tabs */}
         <div className="flex gap-2 mb-8 overflow-x-auto">
           {[
             { id: 'overview', label: 'Overview', icon: TrendingUp },
+            { id: 'budgets', label: 'Budgets', icon: Target },
             { id: 'invoices', label: 'Invoices', icon: FileText }
           ].map(tab => {
             const Icon = tab.icon;
@@ -313,7 +358,7 @@ export default function Finance() {
           })}
         </div>
 
-        {/* Transaction Form */}
+        {/* Forms */}
         <AnimatePresence>
           {showTransactionForm && (
             <TransactionForm
@@ -322,10 +367,6 @@ export default function Finance() {
               onCancel={resetTransactionForm}
             />
           )}
-        </AnimatePresence>
-
-        {/* Invoice Form */}
-        <AnimatePresence>
           {showInvoiceForm && (
             <InvoiceForm
               invoice={editingInvoice}
@@ -333,32 +374,19 @@ export default function Finance() {
               onCancel={resetInvoiceForm}
             />
           )}
+          {showBudgetForm && (
+            <BudgetForm
+              budget={editingBudget}
+              onSubmit={handleBudgetSubmit}
+              onCancel={resetBudgetForm}
+              existingCategories={existingCategories}
+            />
+          )}
         </AnimatePresence>
 
         {/* Content based on active tab */}
         {activeTab === 'overview' && (
           <>
-            {/* Debug Panel */}
-            <Card className="p-4 rounded-[16px] mb-6 border-2 border-blue-200" style={{ background: 'rgba(219, 234, 254, 0.5)' }}>
-              <div className="text-xs space-y-1">
-                <p className="font-bold text-blue-900 mb-2">🔍 Finance Debug Info:</p>
-                <p className="text-blue-800">• Total Transactions: <span className="font-mono font-bold">{transactions.length}</span></p>
-                <p className="text-blue-800">• Income Transactions: <span className="font-mono font-bold">{transactions.filter(t => t.type === 'income').length}</span> = <span className="font-mono font-bold">{user?.currency || '$'}{totalIncome.toLocaleString()}</span></p>
-                <p className="text-blue-800">• Expense Transactions: <span className="font-mono font-bold">{transactions.filter(t => t.type === 'expense').length}</span> = <span className="font-mono font-bold">{user?.currency || '$'}{totalExpenses.toLocaleString()}</span></p>
-                <p className="text-blue-800">• Net Profit Calculation: <span className="font-mono font-bold">{totalIncome} - {totalExpenses} = {netProfit}</span></p>
-                <details className="mt-2">
-                  <summary className="cursor-pointer text-blue-900 font-semibold hover:text-blue-700">View all income transactions</summary>
-                  <div className="mt-2 space-y-1 ml-4">
-                    {transactions.filter(t => t.type === 'income').map(t => (
-                      <p key={t.id} className="text-blue-700 text-xs">
-                        • {t.description}: <span className="font-mono">{user?.currency || '$'}{t.amount}</span> on {format(new Date(t.date), 'MMM d, yyyy')}
-                      </p>
-                    ))}
-                  </div>
-                </details>
-              </div>
-            </Card>
-
             {/* Stats Cards */}
             <div className="mb-8">
               <FinanceStats
@@ -416,7 +444,7 @@ export default function Finance() {
               </Card>
             </div>
 
-            {/* Recent Transactions - Pass currency prop */}
+            {/* Recent Transactions */}
             <TransactionList
               transactions={transactions}
               onEdit={handleEditTransaction}
@@ -426,14 +454,21 @@ export default function Finance() {
           </>
         )}
 
+        {activeTab === 'budgets' && (
+          <BudgetList
+            budgets={budgets}
+            transactions={transactions}
+            onEdit={handleEditBudget}
+            onDelete={(id) => deleteBudgetMutation.mutate(id)}
+            currency={user?.currency}
+          />
+        )}
+
         {activeTab === 'invoices' && (
           <>
-            {/* Invoice Stats */}
             <div className="mb-8">
               <InvoiceStats invoices={invoices} currency={user?.currency} />
             </div>
-
-            {/* Invoice List */}
             <InvoiceList
               invoices={invoices}
               onEdit={handleEditInvoice}
