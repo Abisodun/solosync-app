@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { X, DollarSign, Repeat, Calendar } from 'lucide-react';
+import { X, DollarSign, Repeat, Calendar, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { format, addDays, addWeeks, addMonths, addYears } from 'date-fns';
+import { format, addDays, addWeeks, addMonths, addYears, parseISO } from 'date-fns';
 
 const INCOME_CATEGORIES = ['Salary', 'Freelance', 'Investment', 'Rental Income', 'Business', 'Other Income'];
 const EXPENSE_CATEGORIES = ['Rent', 'Mortgage', 'Utilities', 'Subscriptions', 'Insurance', 'Loan Payment', 'Other Expense'];
@@ -21,19 +21,36 @@ const RECURRENCE_PATTERNS = [
 ];
 
 const calculateNextOccurrence = (startDate, pattern) => {
-  const date = new Date(startDate);
-  switch (pattern) {
-    case 'daily': return format(addDays(date, 1), 'yyyy-MM-dd');
-    case 'weekly': return format(addWeeks(date, 1), 'yyyy-MM-dd');
-    case 'biweekly': return format(addWeeks(date, 2), 'yyyy-MM-dd');
-    case 'monthly': return format(addMonths(date, 1), 'yyyy-MM-dd');
-    case 'quarterly': return format(addMonths(date, 3), 'yyyy-MM-dd');
-    case 'yearly': return format(addYears(date, 1), 'yyyy-MM-dd');
-    default: return format(addMonths(date, 1), 'yyyy-MM-dd');
+  try {
+    const date = new Date(startDate);
+    switch (pattern) {
+      case 'daily': return format(addDays(date, 1), 'yyyy-MM-dd');
+      case 'weekly': return format(addWeeks(date, 1), 'yyyy-MM-dd');
+      case 'biweekly': return format(addWeeks(date, 2), 'yyyy-MM-dd');
+      case 'monthly': return format(addMonths(date, 1), 'yyyy-MM-dd');
+      case 'quarterly': return format(addMonths(date, 3), 'yyyy-MM-dd');
+      case 'yearly': return format(addYears(date, 1), 'yyyy-MM-dd');
+      default: return format(addMonths(date, 1), 'yyyy-MM-dd');
+    }
+  } catch (error) {
+    console.error('Error calculating next occurrence:', error);
+    return format(addMonths(new Date(), 1), 'yyyy-MM-dd');
+  }
+};
+
+const formatDateForInput = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = typeof dateString === 'string' ? parseISO(dateString) : new Date(dateString);
+    return format(date, 'yyyy-MM-dd');
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return '';
   }
 };
 
 export default function RecurringTransactionForm({ transaction, onSubmit, onCancel }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     type: 'expense',
     amount: '',
@@ -45,6 +62,7 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
     notes: '',
     is_recurring: true,
     is_template: true,
+    is_paused: false,
     recurrence_pattern: 'monthly',
     recurrence_end_date: '',
     next_occurrence_date: ''
@@ -52,25 +70,42 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
 
   useEffect(() => {
     if (transaction) {
-      setFormData({
-        ...transaction,
-        date: transaction.date ? format(new Date(transaction.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
-        recurrence_end_date: transaction.recurrence_end_date ? format(new Date(transaction.recurrence_end_date), 'yyyy-MM-dd') : '',
+      console.log('Loading transaction for edit:', transaction);
+      const loadedData = {
+        type: transaction.type || 'expense',
+        amount: transaction.amount?.toString() || '',
+        description: transaction.description || '',
+        category: transaction.category || '',
+        date: formatDateForInput(transaction.date) || format(new Date(), 'yyyy-MM-dd'),
+        payment_method: transaction.payment_method || '',
+        client_name: transaction.client_name || '',
+        notes: transaction.notes || '',
+        is_recurring: true,
+        is_template: true,
+        is_paused: transaction.is_paused || false,
+        recurrence_pattern: transaction.recurrence_pattern || 'monthly',
+        recurrence_end_date: formatDateForInput(transaction.recurrence_end_date),
         next_occurrence_date: transaction.next_occurrence_date || calculateNextOccurrence(transaction.date, transaction.recurrence_pattern)
-      });
+      };
+      console.log('Setting form data:', loadedData);
+      setFormData(loadedData);
     }
   }, [transaction]);
 
   useEffect(() => {
     // Auto-calculate next occurrence when date or pattern changes
-    if (formData.date && formData.recurrence_pattern) {
+    if (formData.date && formData.recurrence_pattern && !isSubmitting) {
       const nextDate = calculateNextOccurrence(formData.date, formData.recurrence_pattern);
-      setFormData(prev => ({ ...prev, next_occurrence_date: nextDate }));
+      if (nextDate !== formData.next_occurrence_date) {
+        setFormData(prev => ({ ...prev, next_occurrence_date: nextDate }));
+      }
     }
   }, [formData.date, formData.recurrence_pattern]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    console.log('Form submitted with data:', formData);
     
     if (!formData.description || !formData.amount || !formData.category || !formData.date) {
       alert('Please fill in all required fields');
@@ -88,12 +123,35 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
       return;
     }
 
-    onSubmit({
-      ...formData,
-      amount: parseFloat(formData.amount),
-      is_recurring: true,
-      is_template: true
-    });
+    setIsSubmitting(true);
+
+    try {
+      const submitData = {
+        type: formData.type,
+        amount: parseFloat(formData.amount),
+        description: formData.description,
+        category: formData.category,
+        date: formData.date,
+        payment_method: formData.payment_method || null,
+        client_name: formData.client_name || null,
+        notes: formData.notes || null,
+        is_recurring: true,
+        is_template: true,
+        is_paused: formData.is_paused || false,
+        recurrence_pattern: formData.recurrence_pattern,
+        recurrence_end_date: formData.recurrence_end_date || null,
+        next_occurrence_date: formData.next_occurrence_date
+      };
+
+      console.log('Submitting data:', submitData);
+      await onSubmit(submitData);
+      console.log('Submit successful');
+    } catch (error) {
+      console.error('Submit error:', error);
+      alert('Failed to save recurring transaction. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const categories = formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
@@ -122,6 +180,7 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
             onClick={onCancel}
             className="p-2 hover:bg-gray-100 rounded-[8px] transition-colors"
             aria-label="Close form"
+            disabled={isSubmitting}
           >
             <X className="w-5 h-5 text-gray-600" />
           </button>
@@ -145,6 +204,7 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
                 style={formData.type === 'income' ? {
                   background: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)'
                 } : {}}
+                disabled={isSubmitting}
               >
                 Income
               </button>
@@ -159,6 +219,7 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
                 style={formData.type === 'expense' ? {
                   background: 'linear-gradient(135deg, #FCA5A5 0%, #EF4444 100%)'
                 } : {}}
+                disabled={isSubmitting}
               >
                 Expense
               </button>
@@ -177,6 +238,7 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
                 placeholder="e.g., Monthly Rent, Salary"
                 className="rounded-[12px]"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -194,6 +256,7 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
                   placeholder="0.00"
                   className="rounded-[12px] pl-10"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -205,7 +268,11 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
               <label className="text-sm font-semibold text-gray-700 mb-2 block">
                 Category *
               </label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                disabled={isSubmitting}
+              >
                 <SelectTrigger className="rounded-[12px]">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -221,7 +288,11 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
               <label className="text-sm font-semibold text-gray-700 mb-2 block">
                 Payment Method
               </label>
-              <Select value={formData.payment_method} onValueChange={(value) => setFormData({ ...formData, payment_method: value })}>
+              <Select 
+                value={formData.payment_method} 
+                onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
+                disabled={isSubmitting}
+              >
                 <SelectTrigger className="rounded-[12px]">
                   <SelectValue placeholder="Select method" />
                 </SelectTrigger>
@@ -246,7 +317,11 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">
                   Frequency *
                 </label>
-                <Select value={formData.recurrence_pattern} onValueChange={(value) => setFormData({ ...formData, recurrence_pattern: value })}>
+                <Select 
+                  value={formData.recurrence_pattern} 
+                  onValueChange={(value) => setFormData({ ...formData, recurrence_pattern: value })}
+                  disabled={isSubmitting}
+                >
                   <SelectTrigger className="rounded-[12px] bg-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -272,6 +347,7 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     className="rounded-[12px] bg-white pl-10"
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
               </div>
@@ -286,6 +362,7 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
                   onChange={(e) => setFormData({ ...formData, recurrence_end_date: e.target.value })}
                   className="rounded-[12px] bg-white"
                   min={formData.date}
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -316,6 +393,7 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
               onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
               placeholder={formData.type === 'income' ? 'Who pays you?' : 'Who do you pay?'}
               className="rounded-[12px]"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -329,6 +407,7 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Additional notes about this recurring transaction..."
               className="rounded-[12px] h-20"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -346,6 +425,7 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
               variant="outline"
               onClick={onCancel}
               className="rounded-[12px]"
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
@@ -353,8 +433,16 @@ export default function RecurringTransactionForm({ transaction, onSubmit, onCanc
               type="submit"
               className="rounded-[12px] text-white"
               style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+              disabled={isSubmitting}
             >
-              {transaction ? 'Update Recurring Transaction' : 'Create Recurring Transaction'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                transaction ? 'Update Recurring Transaction' : 'Create Recurring Transaction'
+              )}
             </Button>
           </div>
         </form>
