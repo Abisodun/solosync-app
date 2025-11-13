@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Edit2, Trash2, Eye, Filter, Download, Send } from 'lucide-react';
 import { format, isPast, parseISO } from 'date-fns';
-import { formatCurrency } from '@/utils/currency';
+import { formatCurrency } from '../utils/currency';
 
 const statusConfig = {
   draft: { color: 'bg-gray-100 text-gray-700', label: 'Draft' },

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, DollarSign, AlertCircle } from 'lucide-react';
-import { formatCurrency } from '@/utils/currency';
+import { formatCurrency } from '../utils/currency';
 
 export default function FinanceStats({ totalIncome, totalExpenses, netProfit, unpaidAmount, currency = 'USD' }) {
   const stats = [

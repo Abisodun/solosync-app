@@ -7,7 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import ReactMarkdown from 'react-markdown';
 import { format, addMonths, startOfMonth } from 'date-fns';
 import { base44 } from '@/api/base44Client';
-import { formatCurrency, getCurrencySymbol } from '@/utils/currency';
+import { formatCurrency, getCurrencySymbol } from '../utils/currency';
 
 export default function AIForecast({ transactions, user }) {
   const [forecast, setForecast] = useState(null);

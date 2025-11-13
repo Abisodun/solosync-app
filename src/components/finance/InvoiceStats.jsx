@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { FileText, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
-import { formatCurrency } from '@/utils/currency';
+import { formatCurrency } from '../utils/currency';
 
 export default function InvoiceStats({ invoices, currency = 'USD' }) {
   const totalInvoices = invoices.length;

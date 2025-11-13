@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Edit2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { formatCurrency } from '@/utils/currency';
+import { formatCurrency } from '../utils/currency';
 
 export default function TransactionList({ transactions, onEdit, onDelete, currency = 'USD' }) {
   if (!transactions || transactions.length === 0) {

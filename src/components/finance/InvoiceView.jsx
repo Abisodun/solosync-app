@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { X, Download, Send, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
-import { formatCurrency, getCurrencySymbol } from '@/utils/currency';
+import { formatCurrency, getCurrencySymbol } from '../utils/currency';
 
 const statusConfig = {
   draft: { color: 'bg-gray-100 text-gray-700', label: 'Draft' },
