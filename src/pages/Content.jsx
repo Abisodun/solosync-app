@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Calendar as CalendarIcon, Instagram, Youtube, Twitter, Linkedin, TrendingUp, Edit2, List, Grid } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Instagram, Youtube, Twitter, Linkedin, TrendingUp, Edit2, List, Grid, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, isValid } from 'date-fns';
 import Sidebar from '../components/common/Sidebar';
@@ -15,7 +15,7 @@ export default function Content() {
   const [showForm, setShowForm] = useState(false);
   const [selectedContent, setSelectedContent] = useState(null);
   const [editingContent, setEditingContent] = useState(null);
-  const [viewMode, setViewMode] = useState('calendar'); // 'calendar' or 'list'
+  const [viewMode, setViewMode] = useState('calendar');
   const queryClient = useQueryClient();
 
   const { data: contentItems = [], isLoading, error } = useQuery({
@@ -29,88 +29,126 @@ export default function Content() {
 
   const createContentMutation = useMutation({
     mutationFn: async (data) => {
-      console.log('➕ Creating content with data:', JSON.stringify(data, null, 2));
+      console.log('🔹 === CREATE MUTATION START ===');
+      console.log('Data to create:', JSON.stringify(data, null, 2));
+      
       const result = await base44.entities.ContentItem.create(data);
-      console.log('✅ Created content result:', JSON.stringify(result, null, 2));
+      
+      console.log('✅ Created successfully:', JSON.stringify(result, null, 2));
+      console.log('🔹 === CREATE MUTATION END ===');
+      
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('🎉 Mutation success, refetching queries...');
       queryClient.invalidateQueries({ queryKey: ['content'] });
       queryClient.refetchQueries({ queryKey: ['content'] });
       setShowForm(false);
       setEditingContent(null);
+    },
+    onError: (error) => {
+      console.error('❌ Mutation error:', error);
+      alert(`Error creating content: ${error.message}`);
     }
   });
 
   const updateContentMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      console.log('✏️ Updating content:', id, JSON.stringify(data, null, 2));
+      console.log('🔹 === UPDATE MUTATION START ===');
+      console.log('Updating ID:', id);
+      console.log('Update data:', JSON.stringify(data, null, 2));
+      
       const result = await base44.entities.ContentItem.update(id, data);
-      console.log('✅ Updated content result:', JSON.stringify(result, null, 2));
+      
+      console.log('✅ Updated successfully:', JSON.stringify(result, null, 2));
+      console.log('🔹 === UPDATE MUTATION END ===');
+      
       return result;
     },
     onSuccess: () => {
+      console.log('🎉 Update success, refetching queries...');
       queryClient.invalidateQueries({ queryKey: ['content'] });
       queryClient.refetchQueries({ queryKey: ['content'] });
       setShowForm(false);
       setEditingContent(null);
+    },
+    onError: (error) => {
+      console.error('❌ Update error:', error);
+      alert(`Error updating content: ${error.message}`);
     }
   });
 
-  const handleSubmit = (data) => {
-    console.log('=== CONTENT SUBMIT START ===');
-    console.log('Raw form data received:', JSON.stringify(data, null, 2));
+  const handleSubmit = (formData) => {
+    console.log('🎯 === CONTENT PAGE SUBMIT HANDLER ===');
+    console.log('Received from form:', JSON.stringify(formData, null, 2));
     
-    // Create a clean copy
-    const finalData = { ...data };
-    
-    // Handle scheduled_date conversion
-    if (finalData.scheduled_date) {
-      try {
-        // The datetime-local input gives us a string like "2025-11-15T10:00"
-        // We need to convert it to a proper ISO string
+    try {
+      // Validate required fields
+      if (!formData.title || !formData.title.trim()) {
+        alert('Title is required');
+        return;
+      }
+      
+      // Process the data
+      const processedData = { ...formData };
+      
+      // Handle scheduled_date conversion
+      if (processedData.scheduled_date && processedData.scheduled_date.trim()) {
+        console.log('🕐 Processing scheduled_date:', processedData.scheduled_date);
         
-        console.log('Processing scheduled_date:', finalData.scheduled_date);
-        console.log('Type:', typeof finalData.scheduled_date);
-        console.log('Length:', finalData.scheduled_date.length);
+        // Validate format: YYYY-MM-DDTHH:mm
+        const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+        if (!dateRegex.test(processedData.scheduled_date)) {
+          console.error('❌ Invalid date format:', processedData.scheduled_date);
+          alert('Invalid date format. Expected format: YYYY-MM-DDTHH:mm');
+          return;
+        }
         
-        // Create a Date object from the datetime-local value
-        const dateObj = new Date(finalData.scheduled_date);
+        // Create Date object
+        const dateObj = new Date(processedData.scheduled_date);
         
-        // Check if date is valid
+        // Validate date
         if (isNaN(dateObj.getTime())) {
-          console.error('❌ Invalid date object created from:', finalData.scheduled_date);
-          throw new Error('Invalid date');
+          console.error('❌ Invalid date value:', processedData.scheduled_date);
+          alert('Invalid date. Please select a valid date and time.');
+          return;
         }
         
         // Convert to ISO string
-        finalData.scheduled_date = dateObj.toISOString();
-        console.log('✅ Converted to ISO:', finalData.scheduled_date);
+        processedData.scheduled_date = dateObj.toISOString();
+        console.log('✅ Converted to ISO:', processedData.scheduled_date);
         
-        // Ensure status is 'scheduled' when date exists
-        if (finalData.status === 'idea' || finalData.status === 'draft' || !finalData.status) {
-          console.log('Auto-setting status to "scheduled" because scheduled_date exists');
-          finalData.status = 'scheduled';
+        // Ensure status is 'scheduled'
+        if (processedData.status !== 'published') {
+          processedData.status = 'scheduled';
+          console.log('✅ Status set to scheduled');
         }
-      } catch (error) {
-        console.error('❌ Error processing scheduled_date:', error);
-        alert('Error: Invalid date format. Please try again.');
-        return;
+      } else {
+        // No date provided, clear it
+        processedData.scheduled_date = null;
+        console.log('ℹ️ No scheduled date provided');
       }
-    }
-    
-    console.log('Final data to submit:', JSON.stringify(finalData, null, 2));
-    console.log('=== CONTENT SUBMIT END ===');
-    
-    if (editingContent) {
-      updateContentMutation.mutate({ id: editingContent.id, data: finalData });
-    } else {
-      createContentMutation.mutate(finalData);
+      
+      console.log('📤 Final processed data:', JSON.stringify(processedData, null, 2));
+      console.log('🎯 === SUBMIT HANDLER END ===');
+      
+      // Submit to API
+      if (editingContent) {
+        console.log('🔄 Updating existing content...');
+        updateContentMutation.mutate({ id: editingContent.id, data: processedData });
+      } else {
+        console.log('➕ Creating new content...');
+        createContentMutation.mutate(processedData);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error in submit handler:', error);
+      alert(`Error: ${error.message}`);
     }
   };
 
   const handleEdit = (item) => {
-    console.log('Editing content item:', JSON.stringify(item, null, 2));
+    console.log('✏️ Editing content:', JSON.stringify(item, null, 2));
     setEditingContent(item);
     setShowForm(true);
     setSelectedContent(null);
@@ -118,7 +156,6 @@ export default function Content() {
 
   const handleContentClick = (item) => {
     setSelectedContent(selectedContent?.id === item.id ? null : item);
-    // Switch to list view to show details
     if (selectedContent?.id !== item.id) {
       setViewMode('list');
     }
@@ -138,7 +175,7 @@ export default function Content() {
     published: 'bg-green-100 text-green-700',
   };
 
-  // Calculate stats with proper filtering
+  // Calculate stats
   const scheduledCount = contentItems.filter(c => c.status === 'scheduled').length;
   const publishedCount = contentItems.filter(c => c.status === 'published').length;
   const draftCount = contentItems.filter(c => c.status === 'draft').length;
@@ -147,16 +184,9 @@ export default function Content() {
     total: contentItems.length,
     scheduled: scheduledCount,
     published: publishedCount,
-    draft: draftCount,
-    items: contentItems.map(c => ({ 
-      id: c.id, 
-      title: c.title, 
-      status: c.status, 
-      scheduled_date: c.scheduled_date 
-    }))
+    draft: draftCount
   });
 
-  // Show error if query failed
   if (error) {
     return (
       <>
@@ -200,7 +230,6 @@ export default function Content() {
                 onClick={() => setViewMode('calendar')}
                 className={`rounded-[10px] ${viewMode === 'calendar' ? 'text-white' : ''}`}
                 style={viewMode === 'calendar' ? { background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' } : {}}
-                aria-label="Calendar view"
               >
                 <Grid className="w-4 h-4 mr-2" />
                 Calendar
@@ -211,7 +240,6 @@ export default function Content() {
                 onClick={() => setViewMode('list')}
                 className={`rounded-[10px] ${viewMode === 'list' ? 'text-white' : ''}`}
                 style={viewMode === 'list' ? { background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' } : {}}
-                aria-label="List view"
               >
                 <List className="w-4 h-4 mr-2" />
                 List
@@ -225,7 +253,6 @@ export default function Content() {
               }}
               className="rounded-[14px] text-white"
               style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
-              aria-label="Create new content"
             >
               <Plus className="w-5 h-5 mr-2" />
               New Content
@@ -277,14 +304,12 @@ export default function Content() {
           })}
         </div>
 
-        {/* Loading State */}
         {isLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
           </div>
         ) : (
           <>
-            {/* Calendar View */}
             {viewMode === 'calendar' && (
               <ContentCalendar 
                 contentItems={contentItems} 
@@ -292,7 +317,6 @@ export default function Content() {
               />
             )}
 
-            {/* List View */}
             {viewMode === 'list' && (
               <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
                 {contentItems.length === 0 ? (
@@ -307,7 +331,6 @@ export default function Content() {
                       }} 
                       className="rounded-[14px] text-white" 
                       style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
-                      aria-label="Create your first content"
                     >
                       <Plus className="w-5 h-5 mr-2" />
                       Create First Content
@@ -374,7 +397,6 @@ export default function Content() {
                                     handleEdit(item);
                                   }}
                                   className="p-2 hover:bg-gray-200 rounded-[8px] transition-colors"
-                                  aria-label="Edit content"
                                 >
                                   <Edit2 className="w-4 h-4 text-gray-600" />
                                 </button>
@@ -382,7 +404,6 @@ export default function Content() {
                             </div>
                           </div>
 
-                          {/* AI Publishing Tips */}
                           {isSelected && (
                             <AIPublishingTips contentItem={item} />
                           )}
