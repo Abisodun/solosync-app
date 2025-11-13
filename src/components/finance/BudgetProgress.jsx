@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
-import { AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, CheckCircle2, TrendingUp, Edit2, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const CURRENCY_SYMBOLS = {
@@ -18,7 +19,7 @@ const formatCurrency = (amount, currencyCode = 'USD') => {
   return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 };
 
-export default function BudgetProgress({ budgets, transactions, currency = 'USD', onEdit }) {
+export default function BudgetProgress({ budgets, transactions, currency = 'USD', onEdit, onDelete }) {
   if (!budgets || budgets.length === 0) {
     return (
       <Card className="p-8 rounded-[20px] text-center" style={{ background: 'rgba(255, 255, 255, 0.95)' }}>
@@ -70,9 +71,8 @@ export default function BudgetProgress({ budgets, transactions, currency = 'USD'
             transition={{ delay: index * 0.1 }}
           >
             <Card 
-              className="p-6 rounded-[20px] cursor-pointer hover:shadow-xl transition-all"
+              className="p-6 rounded-[20px] hover:shadow-xl transition-all"
               style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}
-              onClick={() => onEdit && onEdit(budget)}
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
@@ -98,12 +98,44 @@ export default function BudgetProgress({ budgets, transactions, currency = 'USD'
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-800">
-                    {formatCurrency(budget.spent, currency)}
+                <div className="flex items-start gap-4">
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-800">
+                      {formatCurrency(budget.spent, currency)}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      of {formatCurrency(budget.monthly_limit, currency)}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500">
-                    of {formatCurrency(budget.monthly_limit, currency)}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit && onEdit(budget);
+                      }}
+                      className="rounded-[10px] hover:bg-purple-50 hover:border-purple-300"
+                      title="Edit budget"
+                    >
+                      <Edit2 className="w-4 h-4 text-purple-600" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(`Delete budget for "${budget.category}"?\n\nThis will remove the budget but won't delete your transactions.`)) {
+                          onDelete && onDelete(budget.id);
+                        }
+                      }}
+                      className="rounded-[10px] hover:bg-red-50 hover:border-red-300"
+                      title="Delete budget"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </Button>
                   </div>
                 </div>
               </div>
