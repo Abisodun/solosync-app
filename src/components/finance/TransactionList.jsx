@@ -2,7 +2,21 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Edit2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { formatCurrency } from '../utils/currency';
+
+const CURRENCY_SYMBOLS = {
+  USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥',
+  AUD: 'A$', CAD: 'C$', CHF: 'Fr', INR: '₹', RUB: '₽',
+  BRL: 'R$', KRW: '₩', MXN: 'Mex$', ZAR: 'R', SGD: 'S$',
+  HKD: 'HK$', NOK: 'kr', SEK: 'kr', DKK: 'kr', PLN: 'zł',
+  THB: '฿', IDR: 'Rp', MYR: 'RM', PHP: '₱', TRY: '₺',
+  AED: 'د.إ', SAR: '﷼', ILS: '₪', NZD: 'NZ$', CZK: 'Kč',
+  HUF: 'Ft', RON: 'lei', BGN: 'лв', HRK: 'kn', ISK: 'kr', UAH: '₴',
+};
+
+const formatCurrency = (amount, currencyCode = 'USD') => {
+  const symbol = CURRENCY_SYMBOLS[currencyCode?.toUpperCase()] || currencyCode || '$';
+  return `${symbol}${amount.toLocaleString()}`;
+};
 
 export default function TransactionList({ transactions, onEdit, onDelete, currency = 'USD' }) {
   if (!transactions || transactions.length === 0) {
