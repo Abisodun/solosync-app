@@ -244,6 +244,7 @@ export default function ContentForm({ content, onSubmit, onCancel }) {
                   <SelectItem value="twitter">Twitter</SelectItem>
                   <SelectItem value="linkedin">LinkedIn</SelectItem>
                   <SelectItem value="tiktok">TikTok</SelectItem>
+                  <SelectItem value="snapchat">Snapchat</SelectItem>
                   <SelectItem value="facebook">Facebook</SelectItem>
                   <SelectItem value="website">Website</SelectItem>
                   <SelectItem value="email">Email</SelectItem>

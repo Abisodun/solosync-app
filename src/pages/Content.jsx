@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Calendar as CalendarIcon, Instagram, Youtube, Twitter, Linkedin, TrendingUp, Edit2, List, Grid, AlertCircle } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Instagram, Youtube, Twitter, Linkedin, TrendingUp, Edit2, Trash2, List, Grid } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, isValid } from 'date-fns';
 import Sidebar from '../components/common/Sidebar';
@@ -75,6 +75,28 @@ export default function Content() {
     onError: (error) => {
       console.error('❌ Update error:', error);
       alert(`Error updating content: ${error.message}`);
+    }
+  });
+
+  const deleteContentMutation = useMutation({
+    mutationFn: async (id) => {
+      console.log('🗑️ === DELETE MUTATION START ===');
+      console.log('Deleting content ID:', id);
+      
+      await base44.entities.ContentItem.delete(id);
+      
+      console.log('✅ Deleted successfully');
+      console.log('🗑️ === DELETE MUTATION END ===');
+    },
+    onSuccess: () => {
+      console.log('🎉 Delete success, refetching queries...');
+      queryClient.invalidateQueries({ queryKey: ['content'] });
+      queryClient.refetchQueries({ queryKey: ['content'] });
+      setSelectedContent(null);
+    },
+    onError: (error) => {
+      console.error('❌ Delete error:', error);
+      alert(`Error deleting content: ${error.message}`);
     }
   });
 
@@ -152,6 +174,13 @@ export default function Content() {
     setEditingContent(item);
     setShowForm(true);
     setSelectedContent(null);
+  };
+
+  const handleDelete = (item) => {
+    if (window.confirm(`Are you sure you want to delete "${item.title}"? This action cannot be undone.`)) {
+      console.log('🗑️ Deleting content:', item.id);
+      deleteContentMutation.mutate(item.id);
+    }
   };
 
   const handleContentClick = (item) => {
@@ -397,8 +426,19 @@ export default function Content() {
                                     handleEdit(item);
                                   }}
                                   className="p-2 hover:bg-gray-200 rounded-[8px] transition-colors"
+                                  aria-label="Edit content"
                                 >
                                   <Edit2 className="w-4 h-4 text-gray-600" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(item);
+                                  }}
+                                  className="p-2 hover:bg-red-100 rounded-[8px] transition-colors"
+                                  aria-label="Delete content"
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-600" />
                                 </button>
                               </div>
                             </div>
