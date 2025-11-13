@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, TrendingUp, Target, Repeat } from 'lucide-react';
+import { Plus, FileText, TrendingUp, Target } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card } from "@/components/ui/card";
@@ -19,8 +19,6 @@ import BudgetForm from '../components/finance/BudgetForm';
 import BudgetProgress from '../components/finance/BudgetProgress';
 import BudgetAlerts from '../components/finance/BudgetAlerts';
 import BudgetOverview from '../components/finance/BudgetOverview';
-import RecurringTransactionForm from '../components/finance/RecurringTransactionForm';
-import RecurringTransactionList from '../components/finance/RecurringTransactionList';
 import Sidebar from '../components/common/Sidebar';
 
 export default function Finance() {
@@ -28,11 +26,9 @@ export default function Finance() {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [showBudgetForm, setShowBudgetForm] = useState(false);
-  const [showRecurringForm, setShowRecurringForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [editingBudget, setEditingBudget] = useState(null);
-  const [editingRecurring, setEditingRecurring] = useState(null);
   const [viewingInvoice, setViewingInvoice] = useState(null);
   const [user, setUser] = useState(null);
 
@@ -54,7 +50,9 @@ export default function Finance() {
     queryKey: ['transactions'],
     queryFn: async () => {
       try {
-        return await base44.entities.Transaction.list('-date', 200);
+        const result = await base44.entities.Transaction.list('-date', 200);
+        console.log('📊 Loaded transactions:', result.length);
+        return result;
       } catch (error) {
         console.error('Error loading transactions:', error);
         return [];
@@ -86,18 +84,6 @@ export default function Finance() {
     }
   });
 
-  const { data: recurringTransactions = [], isLoading: recurringLoading } = useQuery({
-    queryKey: ['recurringTransactions'],
-    queryFn: async () => {
-      try {
-        return await base44.entities.RecurringTransaction.list('-created_date', 100);
-      } catch (error) {
-        console.error('Error loading recurring transactions:', error);
-        return [];
-      }
-    }
-  });
-
   // Filter transactions for current month
   const currentMonthTransactions = transactions.filter(t => {
     const transDate = new Date(t.date);
@@ -112,10 +98,17 @@ export default function Finance() {
   const currentMonthBudgets = budgets.filter(b => b.month === currentMonth && b.is_active);
 
   const createTransactionMutation = useMutation({
-    mutationFn: (data) => base44.entities.Transaction.create(data),
+    mutationFn: async (data) => {
+      const result = await base44.entities.Transaction.create(data);
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       resetTransactionForm();
+    },
+    onError: (error) => {
+      console.error('Error creating transaction:', error);
+      alert('Failed to create transaction. Please try again.');
     }
   });
 
@@ -124,12 +117,20 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       resetTransactionForm();
+    },
+    onError: (error) => {
+      console.error('Error updating transaction:', error);
+      alert('Failed to update transaction. Please try again.');
     }
   });
 
   const deleteTransactionMutation = useMutation({
     mutationFn: (id) => base44.entities.Transaction.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+    onError: (error) => {
+      console.error('Error deleting transaction:', error);
+      alert('Failed to delete transaction. Please try again.');
+    }
   });
 
   const createInvoiceMutation = useMutation({
@@ -137,6 +138,10 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       resetInvoiceForm();
+    },
+    onError: (error) => {
+      console.error('Error creating invoice:', error);
+      alert('Failed to create invoice. Please try again.');
     }
   });
 
@@ -146,12 +151,20 @@ export default function Finance() {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       resetInvoiceForm();
       setViewingInvoice(null);
+    },
+    onError: (error) => {
+      console.error('Error updating invoice:', error);
+      alert('Failed to update invoice. Please try again.');
     }
   });
 
   const deleteInvoiceMutation = useMutation({
     mutationFn: (id) => base44.entities.Invoice.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['invoices'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+    onError: (error) => {
+      console.error('Error deleting invoice:', error);
+      alert('Failed to delete invoice. Please try again.');
+    }
   });
 
   const createBudgetMutation = useMutation({
@@ -159,6 +172,10 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       resetBudgetForm();
+    },
+    onError: (error) => {
+      console.error('Error creating budget:', error);
+      alert('Failed to create budget. Please try again.');
     }
   });
 
@@ -167,38 +184,20 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       resetBudgetForm();
+    },
+    onError: (error) => {
+      console.error('Error updating budget:', error);
+      alert('Failed to update budget. Please try again.');
     }
   });
 
   const deleteBudgetMutation = useMutation({
     mutationFn: (id) => base44.entities.Budget.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['budgets'] })
-  });
-
-  const createRecurringMutation = useMutation({
-    mutationFn: (data) => base44.entities.RecurringTransaction.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recurringTransactions'] });
-      resetRecurringForm();
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['budgets'] }),
+    onError: (error) => {
+      console.error('Error deleting budget:', error);
+      alert('Failed to delete budget. Please try again.');
     }
-  });
-
-  const updateRecurringMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.RecurringTransaction.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recurringTransactions'] });
-      resetRecurringForm();
-    }
-  });
-
-  const deleteRecurringMutation = useMutation({
-    mutationFn: (id) => base44.entities.RecurringTransaction.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recurringTransactions'] })
-  });
-
-  const toggleRecurringActiveMutation = useMutation({
-    mutationFn: ({ id, is_active }) => base44.entities.RecurringTransaction.update(id, { is_active }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recurringTransactions'] })
   });
 
   const resetTransactionForm = () => {
@@ -214,11 +213,6 @@ export default function Finance() {
   const resetBudgetForm = () => {
     setEditingBudget(null);
     setShowBudgetForm(false);
-  };
-
-  const resetRecurringForm = () => {
-    setEditingRecurring(null);
-    setShowRecurringForm(false);
   };
 
   const handleTransactionSubmit = async (data) => {
@@ -245,20 +239,11 @@ export default function Finance() {
     }
   };
 
-  const handleRecurringSubmit = async (data) => {
-    if (editingRecurring) {
-      await updateRecurringMutation.mutateAsync({ id: editingRecurring.id, data });
-    } else {
-      await createRecurringMutation.mutateAsync(data);
-    }
-  };
-
   const handleEditTransaction = (transaction) => {
     setEditingTransaction(transaction);
     setShowTransactionForm(true);
     setShowInvoiceForm(false);
     setShowBudgetForm(false);
-    setShowRecurringForm(false);
   };
 
   const handleEditInvoice = (invoice) => {
@@ -266,7 +251,6 @@ export default function Finance() {
     setShowInvoiceForm(true);
     setShowTransactionForm(false);
     setShowBudgetForm(false);
-    setShowRecurringForm(false);
     setActiveTab('invoices');
   };
 
@@ -275,24 +259,7 @@ export default function Finance() {
     setShowBudgetForm(true);
     setShowTransactionForm(false);
     setShowInvoiceForm(false);
-    setShowRecurringForm(false);
     setActiveTab('budgets');
-  };
-
-  const handleEditRecurring = (recurring) => {
-    setEditingRecurring(recurring);
-    setShowRecurringForm(true);
-    setShowTransactionForm(false);
-    setShowInvoiceForm(false);
-    setShowBudgetForm(false);
-    setActiveTab('recurring');
-  };
-
-  const handleToggleRecurringActive = (recurring) => {
-    toggleRecurringActiveMutation.mutate({
-      id: recurring.id,
-      is_active: !recurring.is_active
-    });
   };
 
   const handleInvoiceStatusChange = async (invoiceId, newStatus) => {
@@ -331,7 +298,7 @@ export default function Finance() {
 
   const COLORS = ['#A78BFA', '#93C5FD', '#86EFAC', '#FCD34D', '#F472B6', '#34D399'];
 
-  if (transactionsLoading || invoicesLoading || budgetsLoading || recurringLoading) {
+  if (transactionsLoading || invoicesLoading || budgetsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
@@ -355,13 +322,12 @@ export default function Finance() {
             <h1 className="text-3xl font-bold text-gray-800">Finance Tracker</h1>
             <p className="text-gray-600 mt-1">Manage income, expenses, budgets & invoices</p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex gap-3">
             <Button
               onClick={() => {
                 setShowTransactionForm(!showTransactionForm);
                 setShowInvoiceForm(false);
                 setShowBudgetForm(false);
-                setShowRecurringForm(false);
                 setEditingTransaction(null);
               }}
               className="rounded-[14px] text-white"
@@ -372,25 +338,9 @@ export default function Finance() {
             </Button>
             <Button
               onClick={() => {
-                setShowRecurringForm(!showRecurringForm);
-                setShowTransactionForm(false);
-                setShowInvoiceForm(false);
-                setShowBudgetForm(false);
-                setEditingRecurring(null);
-                setActiveTab('recurring');
-              }}
-              className="rounded-[14px] text-white"
-              style={{ background: 'linear-gradient(135deg, #F472B6 0%, #EC4899 100%)' }}
-            >
-              <Repeat className="w-5 h-5 mr-2" />
-              Recurring
-            </Button>
-            <Button
-              onClick={() => {
                 setShowBudgetForm(!showBudgetForm);
                 setShowTransactionForm(false);
                 setShowInvoiceForm(false);
-                setShowRecurringForm(false);
                 setEditingBudget(null);
                 setActiveTab('budgets');
               }}
@@ -405,7 +355,6 @@ export default function Finance() {
                 setShowInvoiceForm(!showInvoiceForm);
                 setShowTransactionForm(false);
                 setShowBudgetForm(false);
-                setShowRecurringForm(false);
                 setEditingInvoice(null);
                 setActiveTab('invoices');
               }}
@@ -418,7 +367,7 @@ export default function Finance() {
           </div>
         </div>
 
-        {/* Budget Alerts */}
+        {/* Budget Alerts - Show on all tabs */}
         <BudgetAlerts 
           budgets={currentMonthBudgets}
           transactions={currentMonthTransactions}
@@ -429,7 +378,6 @@ export default function Finance() {
         <div className="flex gap-2 mb-8 overflow-x-auto">
           {[
             { id: 'overview', label: 'Overview', icon: TrendingUp },
-            { id: 'recurring', label: 'Recurring', icon: Repeat },
             { id: 'budgets', label: 'Budgets', icon: Target },
             { id: 'invoices', label: 'Invoices', icon: FileText }
           ].map(tab => {
@@ -455,7 +403,7 @@ export default function Finance() {
           })}
         </div>
 
-        {/* Forms */}
+        {/* Transaction Form */}
         <AnimatePresence>
           {showTransactionForm && (
             <TransactionForm
@@ -464,6 +412,10 @@ export default function Finance() {
               onCancel={resetTransactionForm}
             />
           )}
+        </AnimatePresence>
+
+        {/* Invoice Form */}
+        <AnimatePresence>
           {showInvoiceForm && (
             <InvoiceForm
               invoice={editingInvoice}
@@ -471,6 +423,10 @@ export default function Finance() {
               onCancel={resetInvoiceForm}
             />
           )}
+        </AnimatePresence>
+
+        {/* Budget Form */}
+        <AnimatePresence>
           {showBudgetForm && (
             <BudgetForm
               budget={editingBudget}
@@ -478,18 +434,12 @@ export default function Finance() {
               onCancel={resetBudgetForm}
             />
           )}
-          {showRecurringForm && (
-            <RecurringTransactionForm
-              recurringTransaction={editingRecurring}
-              onSubmit={handleRecurringSubmit}
-              onCancel={resetRecurringForm}
-            />
-          )}
         </AnimatePresence>
 
         {/* Content based on active tab */}
         {activeTab === 'overview' && (
           <>
+            {/* Stats Cards */}
             <div className="mb-8">
               <FinanceStats
                 totalIncome={totalIncome}
@@ -500,10 +450,12 @@ export default function Finance() {
               />
             </div>
 
+            {/* AI Financial Forecast Section */}
             <div className="mb-8">
               <AIForecast transactions={transactions} user={user} />
             </div>
 
+            {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
                 <h3 className="text-lg font-bold text-gray-800 mb-4">Income vs Expenses</h3>
@@ -544,6 +496,7 @@ export default function Finance() {
               </Card>
             </div>
 
+            {/* Recent Transactions */}
             <TransactionList
               transactions={transactions}
               onEdit={handleEditTransaction}
@@ -553,23 +506,16 @@ export default function Finance() {
           </>
         )}
 
-        {activeTab === 'recurring' && (
-          <RecurringTransactionList
-            recurringTransactions={recurringTransactions}
-            onEdit={handleEditRecurring}
-            onDelete={(id) => deleteRecurringMutation.mutate(id)}
-            onToggleActive={handleToggleRecurringActive}
-            currency={user?.currency}
-          />
-        )}
-
         {activeTab === 'budgets' && (
           <>
+            {/* Budget Overview Stats */}
             <BudgetOverview
               budgets={currentMonthBudgets}
               transactions={currentMonthTransactions}
               currency={user?.currency}
             />
+
+            {/* Budget Progress */}
             <BudgetProgress
               budgets={currentMonthBudgets}
               transactions={currentMonthTransactions}
@@ -581,9 +527,12 @@ export default function Finance() {
 
         {activeTab === 'invoices' && (
           <>
+            {/* Invoice Stats */}
             <div className="mb-8">
               <InvoiceStats invoices={invoices} currency={user?.currency} />
             </div>
+
+            {/* Invoice List */}
             <InvoiceList
               invoices={invoices}
               onEdit={handleEditInvoice}
@@ -595,6 +544,7 @@ export default function Finance() {
           </>
         )}
 
+        {/* Invoice View Modal */}
         <AnimatePresence>
           {viewingInvoice && (
             <InvoiceView
