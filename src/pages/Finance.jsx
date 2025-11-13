@@ -6,7 +6,7 @@ import { Plus, FileText, TrendingUp, Target } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card } from "@/components/ui/card";
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import AIForecast from '../components/finance/AIForecast';
 import TransactionForm from '../components/finance/TransactionForm';
 import TransactionList from '../components/finance/TransactionList';
@@ -16,8 +16,9 @@ import InvoiceList from '../components/finance/InvoiceList';
 import InvoiceView from '../components/finance/InvoiceView';
 import InvoiceStats from '../components/finance/InvoiceStats';
 import BudgetForm from '../components/finance/BudgetForm';
-import BudgetList from '../components/finance/BudgetList';
+import BudgetProgress from '../components/finance/BudgetProgress';
 import BudgetAlerts from '../components/finance/BudgetAlerts';
+import BudgetOverview from '../components/finance/BudgetOverview';
 import Sidebar from '../components/common/Sidebar';
 
 export default function Finance() {
@@ -49,7 +50,9 @@ export default function Finance() {
     queryKey: ['transactions'],
     queryFn: async () => {
       try {
-        return await base44.entities.Transaction.list('-date', 200);
+        const result = await base44.entities.Transaction.list('-date', 200);
+        console.log('📊 Loaded transactions:', result.length);
+        return result;
       } catch (error) {
         console.error('Error loading transactions:', error);
         return [];
@@ -73,7 +76,7 @@ export default function Finance() {
     queryKey: ['budgets'],
     queryFn: async () => {
       try {
-        return await base44.entities.Budget.list('-month', 100);
+        return await base44.entities.Budget.list('-created_date', 100);
       } catch (error) {
         console.error('Error loading budgets:', error);
         return [];
@@ -81,8 +84,24 @@ export default function Finance() {
     }
   });
 
+  // Filter transactions for current month
+  const currentMonthTransactions = transactions.filter(t => {
+    const transDate = new Date(t.date);
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    return isWithinInterval(transDate, { start: monthStart, end: monthEnd });
+  });
+
+  // Filter budgets for current month
+  const currentMonth = format(new Date(), 'yyyy-MM');
+  const currentMonthBudgets = budgets.filter(b => b.month === currentMonth && b.is_active);
+
   const createTransactionMutation = useMutation({
-    mutationFn: (data) => base44.entities.Transaction.create(data),
+    mutationFn: async (data) => {
+      const result = await base44.entities.Transaction.create(data);
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       resetTransactionForm();
@@ -98,12 +117,20 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       resetTransactionForm();
+    },
+    onError: (error) => {
+      console.error('Error updating transaction:', error);
+      alert('Failed to update transaction. Please try again.');
     }
   });
 
   const deleteTransactionMutation = useMutation({
     mutationFn: (id) => base44.entities.Transaction.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+    onError: (error) => {
+      console.error('Error deleting transaction:', error);
+      alert('Failed to delete transaction. Please try again.');
+    }
   });
 
   const createInvoiceMutation = useMutation({
@@ -111,6 +138,10 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       resetInvoiceForm();
+    },
+    onError: (error) => {
+      console.error('Error creating invoice:', error);
+      alert('Failed to create invoice. Please try again.');
     }
   });
 
@@ -120,12 +151,20 @@ export default function Finance() {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       resetInvoiceForm();
       setViewingInvoice(null);
+    },
+    onError: (error) => {
+      console.error('Error updating invoice:', error);
+      alert('Failed to update invoice. Please try again.');
     }
   });
 
   const deleteInvoiceMutation = useMutation({
     mutationFn: (id) => base44.entities.Invoice.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['invoices'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+    onError: (error) => {
+      console.error('Error deleting invoice:', error);
+      alert('Failed to delete invoice. Please try again.');
+    }
   });
 
   const createBudgetMutation = useMutation({
@@ -145,12 +184,20 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       resetBudgetForm();
+    },
+    onError: (error) => {
+      console.error('Error updating budget:', error);
+      alert('Failed to update budget. Please try again.');
     }
   });
 
   const deleteBudgetMutation = useMutation({
     mutationFn: (id) => base44.entities.Budget.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['budgets'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['budgets'] }),
+    onError: (error) => {
+      console.error('Error deleting budget:', error);
+      alert('Failed to delete budget. Please try again.');
+    }
   });
 
   const resetTransactionForm = () => {
@@ -251,12 +298,6 @@ export default function Finance() {
 
   const COLORS = ['#A78BFA', '#93C5FD', '#86EFAC', '#FCD34D', '#F472B6', '#34D399'];
 
-  // Get existing budget categories for the current month
-  const currentMonth = format(new Date(), 'yyyy-MM');
-  const existingCategories = budgets
-    .filter(b => b.month === currentMonth)
-    .map(b => b.category);
-
   if (transactionsLoading || invoicesLoading || budgetsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -326,8 +367,12 @@ export default function Finance() {
           </div>
         </div>
 
-        {/* Budget Alerts */}
-        <BudgetAlerts budgets={budgets} transactions={transactions} currency={user?.currency} />
+        {/* Budget Alerts - Show on all tabs */}
+        <BudgetAlerts 
+          budgets={currentMonthBudgets}
+          transactions={currentMonthTransactions}
+          currency={user?.currency}
+        />
 
         {/* Tabs */}
         <div className="flex gap-2 mb-8 overflow-x-auto">
@@ -358,7 +403,7 @@ export default function Finance() {
           })}
         </div>
 
-        {/* Forms */}
+        {/* Transaction Form */}
         <AnimatePresence>
           {showTransactionForm && (
             <TransactionForm
@@ -367,6 +412,10 @@ export default function Finance() {
               onCancel={resetTransactionForm}
             />
           )}
+        </AnimatePresence>
+
+        {/* Invoice Form */}
+        <AnimatePresence>
           {showInvoiceForm && (
             <InvoiceForm
               invoice={editingInvoice}
@@ -374,12 +423,15 @@ export default function Finance() {
               onCancel={resetInvoiceForm}
             />
           )}
+        </AnimatePresence>
+
+        {/* Budget Form */}
+        <AnimatePresence>
           {showBudgetForm && (
             <BudgetForm
               budget={editingBudget}
               onSubmit={handleBudgetSubmit}
               onCancel={resetBudgetForm}
-              existingCategories={existingCategories}
             />
           )}
         </AnimatePresence>
@@ -455,20 +507,32 @@ export default function Finance() {
         )}
 
         {activeTab === 'budgets' && (
-          <BudgetList
-            budgets={budgets}
-            transactions={transactions}
-            onEdit={handleEditBudget}
-            onDelete={(id) => deleteBudgetMutation.mutate(id)}
-            currency={user?.currency}
-          />
+          <>
+            {/* Budget Overview Stats */}
+            <BudgetOverview
+              budgets={currentMonthBudgets}
+              transactions={currentMonthTransactions}
+              currency={user?.currency}
+            />
+
+            {/* Budget Progress */}
+            <BudgetProgress
+              budgets={currentMonthBudgets}
+              transactions={currentMonthTransactions}
+              currency={user?.currency}
+              onEdit={handleEditBudget}
+            />
+          </>
         )}
 
         {activeTab === 'invoices' && (
           <>
+            {/* Invoice Stats */}
             <div className="mb-8">
               <InvoiceStats invoices={invoices} currency={user?.currency} />
             </div>
+
+            {/* Invoice List */}
             <InvoiceList
               invoices={invoices}
               onEdit={handleEditInvoice}
