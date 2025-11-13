@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, DollarSign, AlertCircle } from 'lucide-react';
+import { formatCurrency } from '@/utils/currency';
 
 export default function FinanceStats({ totalIncome, totalExpenses, netProfit, unpaidAmount, currency = 'USD' }) {
   const stats = [
@@ -40,11 +41,6 @@ export default function FinanceStats({ totalIncome, totalExpenses, netProfit, un
     }
   ];
 
-  const formatCurrency = (amount) => {
-    const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
-    return `${symbol}${amount.toLocaleString()}`;
-  };
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
       {stats.map((stat, index) => {
@@ -58,7 +54,7 @@ export default function FinanceStats({ totalIncome, totalExpenses, netProfit, un
               boxShadow: `0 8px 32px ${stat.shadow}`
             }}
             role="region"
-            aria-label={`${stat.label}: ${formatCurrency(stat.value)}`}
+            aria-label={`${stat.label}: ${formatCurrency(stat.value, currency)}`}
           >
             <div className="flex items-center gap-4">
               <div
@@ -70,7 +66,7 @@ export default function FinanceStats({ totalIncome, totalExpenses, netProfit, un
               </div>
               <div>
                 <div className={`text-2xl font-bold ${stat.textColor}`}>
-                  {formatCurrency(stat.value)}
+                  {formatCurrency(stat.value, currency)}
                 </div>
                 <div className="text-sm text-gray-600">{stat.label}</div>
               </div>

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { X, Download, Send, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import { formatCurrency, getCurrencySymbol } from '@/utils/currency';
 
 const statusConfig = {
   draft: { color: 'bg-gray-100 text-gray-700', label: 'Draft' },
@@ -16,6 +17,8 @@ const statusConfig = {
 export default function InvoiceView({ invoice, user, onClose }) {
   if (!invoice) return null;
 
+  const currency = user?.currency || 'USD';
+  const symbol = getCurrencySymbol(currency);
   const config = statusConfig[invoice.status];
   const subtotal = invoice.items?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
   const taxRate = invoice.tax_rate || 0;
@@ -180,9 +183,9 @@ export default function InvoiceView({ invoice, user, onClose }) {
                     <tr key={index} className="border-b border-gray-200">
                       <td className="py-4 text-gray-800">{item.description}</td>
                       <td className="py-4 text-right text-gray-800">{item.quantity}</td>
-                      <td className="py-4 text-right text-gray-800">${item.rate.toFixed(2)}</td>
+                      <td className="py-4 text-right text-gray-800">{symbol}{item.rate.toFixed(2)}</td>
                       <td className="py-4 text-right text-gray-800 font-medium">
-                        ${item.amount.toFixed(2)}
+                        {symbol}{item.amount.toFixed(2)}
                       </td>
                     </tr>
                   ))}
@@ -195,21 +198,21 @@ export default function InvoiceView({ invoice, user, onClose }) {
               <div className="w-80 space-y-3">
                 <div className="flex justify-between py-2">
                   <span className="text-gray-700">Subtotal:</span>
-                  <span className="font-semibold text-gray-800">${subtotal.toFixed(2)}</span>
+                  <span className="font-semibold text-gray-800">{symbol}{subtotal.toFixed(2)}</span>
                 </div>
                 
                 {taxRate > 0 && (
                   <>
                     <div className="flex justify-between py-2">
                       <span className="text-gray-700">Tax ({taxRate}%):</span>
-                      <span className="font-semibold text-gray-800">${tax.toFixed(2)}</span>
+                      <span className="font-semibold text-gray-800">{symbol}{tax.toFixed(2)}</span>
                     </div>
                   </>
                 )}
                 
                 <div className="flex justify-between py-4 border-t-2 border-gray-300">
                   <span className="text-xl font-bold text-gray-800">Total:</span>
-                  <span className="text-2xl font-bold text-blue-600">${total.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-blue-600">{symbol}{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>

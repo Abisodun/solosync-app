@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Edit2, Trash2, Eye, Filter, Download, Send } from 'lucide-react';
 import { format, isPast, parseISO } from 'date-fns';
+import { formatCurrency } from '@/utils/currency';
 
 const statusConfig = {
   draft: { color: 'bg-gray-100 text-gray-700', label: 'Draft' },
@@ -13,7 +14,7 @@ const statusConfig = {
   overdue: { color: 'bg-red-100 text-red-700', label: 'Overdue' }
 };
 
-export default function InvoiceList({ invoices, onEdit, onDelete, onView, onStatusChange }) {
+export default function InvoiceList({ invoices, onEdit, onDelete, onView, onStatusChange, currency = 'USD' }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('-issue_date');
 
@@ -141,7 +142,7 @@ export default function InvoiceList({ invoices, onEdit, onDelete, onView, onStat
 
                 <div className="text-right">
                   <div className="text-xl font-bold text-gray-800">
-                    ${invoice.amount.toLocaleString()}
+                    {formatCurrency(invoice.amount, currency)}
                   </div>
                 </div>
               </div>

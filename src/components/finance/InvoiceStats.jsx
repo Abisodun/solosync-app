@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { FileText, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
+import { formatCurrency } from '@/utils/currency';
 
 export default function InvoiceStats({ invoices, currency = 'USD' }) {
   const totalInvoices = invoices.length;
@@ -15,7 +16,7 @@ export default function InvoiceStats({ invoices, currency = 'USD' }) {
   const stats = [
     {
       label: 'Total Invoiced',
-      value: `$${totalBilled.toLocaleString()}`,
+      value: formatCurrency(totalBilled, currency),
       icon: DollarSign,
       gradient: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)',
       shadow: 'rgba(147, 197, 253, 0.15)',
@@ -23,7 +24,7 @@ export default function InvoiceStats({ invoices, currency = 'USD' }) {
     },
     {
       label: 'Paid',
-      value: `$${totalPaid.toLocaleString()}`,
+      value: formatCurrency(totalPaid, currency),
       icon: CheckCircle2,
       gradient: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)',
       shadow: 'rgba(134, 239, 172, 0.15)',
@@ -31,7 +32,7 @@ export default function InvoiceStats({ invoices, currency = 'USD' }) {
     },
     {
       label: 'Pending',
-      value: `$${totalPending.toLocaleString()}`,
+      value: formatCurrency(totalPending, currency),
       icon: Clock,
       gradient: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)',
       shadow: 'rgba(252, 211, 77, 0.15)',

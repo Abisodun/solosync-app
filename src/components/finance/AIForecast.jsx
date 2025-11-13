@@ -7,10 +7,14 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import ReactMarkdown from 'react-markdown';
 import { format, addMonths, startOfMonth } from 'date-fns';
 import { base44 } from '@/api/base44Client';
+import { formatCurrency, getCurrencySymbol } from '@/utils/currency';
 
 export default function AIForecast({ transactions, user }) {
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const currency = user?.currency || 'USD';
+  const symbol = getCurrencySymbol(currency);
 
   const generateForecast = async () => {
     setLoading(true);
@@ -56,30 +60,30 @@ export default function AIForecast({ transactions, user }) {
       const prompt = `You are a financial advisor AI assistant. Analyze the following financial data and provide comprehensive forecasting and recommendations.
 
 **Historical Financial Data (Last 6 Months):**
-${recentData.map(m => `- ${m.month}: Income $${m.income.toLocaleString()}, Expenses $${m.expenses.toLocaleString()}, Net $${m.net.toLocaleString()}`).join('\n')}
+${recentData.map(m => `- ${m.month}: Income ${symbol}${m.income.toLocaleString()}, Expenses ${symbol}${m.expenses.toLocaleString()}, Net ${symbol}${m.net.toLocaleString()}`).join('\n')}
 
 **Averages:**
-- Average Monthly Income: $${avgIncome.toLocaleString()}
-- Average Monthly Expenses: $${avgExpenses.toLocaleString()}
-- Average Net Income: $${avgNet.toLocaleString()}
+- Average Monthly Income: ${symbol}${avgIncome.toLocaleString()}
+- Average Monthly Expenses: ${symbol}${avgExpenses.toLocaleString()}
+- Average Net Income: ${symbol}${avgNet.toLocaleString()}
 
 **Total All-Time:**
-- Total Income: $${totalIncome.toLocaleString()}
-- Total Expenses: $${totalExpenses.toLocaleString()}
+- Total Income: ${symbol}${totalIncome.toLocaleString()}
+- Total Expenses: ${symbol}${totalExpenses.toLocaleString()}
 
 **Top Expense Categories:**
-${Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([cat, amt]) => `- ${cat}: $${amt.toLocaleString()}`).join('\n')}
+${Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([cat, amt]) => `- ${cat}: ${symbol}${amt.toLocaleString()}`).join('\n')}
 
 **User Profile:**
 - Role: ${user?.role || 'freelancer'}
-- Currency: ${user?.currency || 'USD'}
+- Currency: ${currency}
 
 Please provide:
 
 1. **3-Month Income & Expense Forecast**: Predict income and expenses for the next 3 months. Format as:
-   - Month 1: Income $X, Expenses $Y, Net $Z
-   - Month 2: Income $X, Expenses $Y, Net $Z
-   - Month 3: Income $X, Expenses $Y, Net $Z
+   - Month 1: Income ${symbol}X, Expenses ${symbol}Y, Net ${symbol}Z
+   - Month 2: Income ${symbol}X, Expenses ${symbol}Y, Net ${symbol}Z
+   - Month 3: Income ${symbol}X, Expenses ${symbol}Y, Net ${symbol}Z
 
 2. **Cash Flow Analysis**: Identify any potential shortages or concerning trends.
 
@@ -261,7 +265,7 @@ Format your response in clear sections with headers. Be specific and data-driven
                 <span className="text-sm text-gray-600">Avg Monthly Income</span>
               </div>
               <div className="text-2xl font-bold text-green-700">
-                {user?.currency || '$'}{forecast.avgIncome.toLocaleString()}
+                {formatCurrency(forecast.avgIncome, currency)}
               </div>
             </Card>
 
@@ -271,7 +275,7 @@ Format your response in clear sections with headers. Be specific and data-driven
                 <span className="text-sm text-gray-600">Avg Monthly Expenses</span>
               </div>
               <div className="text-2xl font-bold text-red-700">
-                {user?.currency || '$'}{forecast.avgExpenses.toLocaleString()}
+                {formatCurrency(forecast.avgExpenses, currency)}
               </div>
             </Card>
 
@@ -283,7 +287,7 @@ Format your response in clear sections with headers. Be specific and data-driven
                 <span className="text-sm text-gray-600">Avg Net Income</span>
               </div>
               <div className={`text-2xl font-bold ${forecast.avgNet >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
-                {user?.currency || '$'}{Math.abs(forecast.avgNet).toLocaleString()}
+                {formatCurrency(Math.abs(forecast.avgNet), currency)}
               </div>
             </Card>
           </div>
