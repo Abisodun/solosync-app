@@ -44,7 +44,16 @@ export default function Finance() {
     queryKey: ['transactions'],
     queryFn: async () => {
       try {
-        return await base44.entities.Transaction.list('-date', 200);
+        const result = await base44.entities.Transaction.list('-date', 200);
+        console.log('📊 Loaded transactions:', result.length);
+        console.log('💰 Transaction details:', result.map(t => ({
+          id: t.id,
+          description: t.description,
+          amount: t.amount,
+          type: t.type,
+          date: t.date
+        })));
+        return result;
       } catch (error) {
         console.error('Error loading transactions:', error);
         return [];
@@ -65,7 +74,12 @@ export default function Finance() {
   });
 
   const createTransactionMutation = useMutation({
-    mutationFn: (data) => base44.entities.Transaction.create(data),
+    mutationFn: async (data) => {
+      console.log('➕ Creating transaction:', data);
+      const result = await base44.entities.Transaction.create(data);
+      console.log('✅ Transaction created:', result);
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       resetTransactionForm();
@@ -180,12 +194,22 @@ export default function Finance() {
     }
   };
 
-  // Calculate stats
+  // Calculate stats with detailed logging
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const netProfit = totalIncome - totalExpenses;
   const unpaidInvoices = invoices.filter(i => i.status === 'sent' || i.status === 'overdue');
   const unpaidAmount = unpaidInvoices.reduce((sum, i) => sum + i.amount, 0);
+
+  // Log calculations
+  console.log('💵 Finance Stats Calculation:', {
+    totalTransactions: transactions.length,
+    incomeTransactions: transactions.filter(t => t.type === 'income').length,
+    expenseTransactions: transactions.filter(t => t.type === 'expense').length,
+    totalIncome,
+    totalExpenses,
+    netProfit: `${totalIncome} - ${totalExpenses} = ${netProfit}`
+  });
 
   // Chart data
   const monthlyData = transactions.reduce((acc, t) => {
@@ -314,6 +338,27 @@ export default function Finance() {
         {/* Content based on active tab */}
         {activeTab === 'overview' && (
           <>
+            {/* Debug Panel */}
+            <Card className="p-4 rounded-[16px] mb-6 border-2 border-blue-200" style={{ background: 'rgba(219, 234, 254, 0.5)' }}>
+              <div className="text-xs space-y-1">
+                <p className="font-bold text-blue-900 mb-2">🔍 Finance Debug Info:</p>
+                <p className="text-blue-800">• Total Transactions: <span className="font-mono font-bold">{transactions.length}</span></p>
+                <p className="text-blue-800">• Income Transactions: <span className="font-mono font-bold">{transactions.filter(t => t.type === 'income').length}</span> = <span className="font-mono font-bold">{user?.currency || '$'}{totalIncome.toLocaleString()}</span></p>
+                <p className="text-blue-800">• Expense Transactions: <span className="font-mono font-bold">{transactions.filter(t => t.type === 'expense').length}</span> = <span className="font-mono font-bold">{user?.currency || '$'}{totalExpenses.toLocaleString()}</span></p>
+                <p className="text-blue-800">• Net Profit Calculation: <span className="font-mono font-bold">{totalIncome} - {totalExpenses} = {netProfit}</span></p>
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-blue-900 font-semibold hover:text-blue-700">View all income transactions</summary>
+                  <div className="mt-2 space-y-1 ml-4">
+                    {transactions.filter(t => t.type === 'income').map(t => (
+                      <p key={t.id} className="text-blue-700 text-xs">
+                        • {t.description}: <span className="font-mono">{user?.currency || '$'}{t.amount}</span> on {format(new Date(t.date), 'MMM d, yyyy')}
+                      </p>
+                    ))}
+                  </div>
+                </details>
+              </div>
+            </Card>
+
             {/* Stats Cards */}
             <div className="mb-8">
               <FinanceStats
@@ -395,6 +440,7 @@ export default function Finance() {
               onDelete={(id) => deleteInvoiceMutation.mutate(id)}
               onView={setViewingInvoice}
               onStatusChange={handleInvoiceStatusChange}
+              currency={user?.currency}
             />
           </>
         )}
