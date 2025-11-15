@@ -108,7 +108,7 @@ export default function EnhancedEmailComposer({
           to: recipient,
           subject: subject,
           body: emailBody,
-          from_name: user.full_name || 'Team'
+          from_name: `${user.full_name || 'SoloSync'} (No-Reply)`
         })
       );
 
