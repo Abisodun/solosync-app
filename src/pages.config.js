@@ -12,6 +12,7 @@ import Content from './pages/Content';
 import Habits from './pages/Habits';
 import Projects from './pages/Projects';
 import Feedback from './pages/Feedback';
+import EmailTemplates from './pages/EmailTemplates';
 import Layout from './Layout.jsx';
 
 
@@ -30,6 +31,7 @@ export const PAGES = {
     "Habits": Habits,
     "Projects": Projects,
     "Feedback": Feedback,
+    "EmailTemplates": EmailTemplates,
 }
 
 export const pagesConfig = {
