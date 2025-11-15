@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { X, Mail, Upload, Loader2, Paperclip, Trash2, Send, Template, Link as LinkIcon } from 'lucide-react';
+import { X, Mail, Upload, Loader2, Paperclip, Trash2, Send, FileText, Link as LinkIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import ReactQuill from 'react-quill';
@@ -256,7 +256,7 @@ export default function EnhancedEmailComposer({
                 onClick={() => setShowTemplates(!showTemplates)}
                 className="rounded-[8px]"
               >
-                <Template className="w-4 h-4 mr-1" />
+                <FileText className="w-4 h-4 mr-1" />
                 Templates
               </Button>
               <Button
