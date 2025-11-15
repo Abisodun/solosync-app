@@ -13,6 +13,7 @@ import Habits from './pages/Habits';
 import Projects from './pages/Projects';
 import Feedback from './pages/Feedback';
 import EmailTemplates from './pages/EmailTemplates';
+import Mailbox from './pages/Mailbox';
 import Layout from './Layout.jsx';
 
 
@@ -32,6 +33,7 @@ export const PAGES = {
     "Projects": Projects,
     "Feedback": Feedback,
     "EmailTemplates": EmailTemplates,
+    "Mailbox": Mailbox,
 }
 
 export const pagesConfig = {

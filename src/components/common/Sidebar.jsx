@@ -16,7 +16,8 @@ import {
   Settings as SettingsIcon,
   FolderKanban,
   MessageSquare,
-  Mail
+  Mail,
+  Inbox
 } from 'lucide-react';
 import Logo from '../landing/Logo';
 
@@ -31,6 +32,7 @@ const navigation = [
   { name: 'Content', icon: Calendar, page: 'Content' },
   { name: 'Habits', icon: Heart, page: 'Habits' },
   { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep' },
+  { name: 'Mailbox', icon: Inbox, page: 'Mailbox' },
   { name: 'Email Templates', icon: Mail, page: 'EmailTemplates' },
   { name: 'Feedback', icon: MessageSquare, page: 'Feedback' }
 ];
