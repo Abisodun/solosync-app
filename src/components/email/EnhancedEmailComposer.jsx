@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { X, Mail, Upload, Loader2, Paperclip, Trash2, Send, FileText, Link as LinkIcon } from 'lucide-react';
+import { X, Mail, Loader2, Paperclip, Trash2, Send, FileText, Link as LinkIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import ReactQuill from 'react-quill';
@@ -95,8 +95,7 @@ export default function EnhancedEmailComposer({
       const user = await base44.auth.me();
       const allRecipients = [...toList, ...ccList, ...bccList];
 
-      // Create email body with attachments
-      let emailBody = body.replace(/<[^>]*>/g, ''); // Strip HTML for plain text
+      let emailBody = body.replace(/<[^>]*>/g, '');
       if (attachments.length > 0) {
         emailBody += '\n\n---\nAttachments:\n';
         attachments.forEach(att => {
@@ -104,7 +103,6 @@ export default function EnhancedEmailComposer({
         });
       }
 
-      // Send emails
       const sendPromises = allRecipients.map(recipient => 
         base44.integrations.Core.SendEmail({
           to: recipient,
@@ -116,10 +114,8 @@ export default function EnhancedEmailComposer({
 
       await Promise.all(sendPromises);
 
-      // Generate thread ID if replying
       const threadId = replyTo?.thread_id || replyTo?.id || `thread_${Date.now()}`;
 
-      // Log the email
       await base44.entities.EmailLog.create({
         sender_email: user.email,
         recipients: toList,
@@ -136,7 +132,6 @@ export default function EnhancedEmailComposer({
         status: 'sent'
       });
 
-      // Update contact email counts
       for (const email of toList) {
         const contacts = await base44.entities.Contact.filter({ email });
         if (contacts.length > 0) {
@@ -169,7 +164,6 @@ export default function EnhancedEmailComposer({
           className="w-full max-w-4xl max-h-[90vh] overflow-y-auto"
         >
           <Card className="p-6 rounded-[20px]" style={{ background: 'white' }}>
-            {/* Header */}
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
               <h3 className="text-xl font-bold text-gray-800">New Message</h3>
               <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-[8px]" disabled={sending}>
@@ -177,7 +171,6 @@ export default function EnhancedEmailComposer({
               </button>
             </div>
 
-            {/* Recipients */}
             <div className="space-y-3 mb-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-gray-700 w-12">To:</span>
@@ -189,22 +182,12 @@ export default function EnhancedEmailComposer({
                 />
                 <div className="flex gap-2">
                   {!showCc && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setShowCc(true)}
-                      className="text-xs text-gray-600"
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => setShowCc(true)} className="text-xs text-gray-600">
                       Cc
                     </Button>
                   )}
                   {!showBcc && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setShowBcc(true)}
-                      className="text-xs text-gray-600"
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => setShowBcc(true)} className="text-xs text-gray-600">
                       Bcc
                     </Button>
                   )}
@@ -214,29 +197,18 @@ export default function EnhancedEmailComposer({
               {showCc && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-700 w-12">Cc:</span>
-                  <ContactSelector
-                    value={cc}
-                    onChange={setCc}
-                    placeholder="Carbon copy"
-                    disabled={sending}
-                  />
+                  <ContactSelector value={cc} onChange={setCc} placeholder="Carbon copy" disabled={sending} />
                 </div>
               )}
 
               {showBcc && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-700 w-12">Bcc:</span>
-                  <ContactSelector
-                    value={bcc}
-                    onChange={setBcc}
-                    placeholder="Blind carbon copy"
-                    disabled={sending}
-                  />
+                  <ContactSelector value={bcc} onChange={setBcc} placeholder="Blind carbon copy" disabled={sending} />
                 </div>
               )}
             </div>
 
-            {/* Subject */}
             <div className="flex items-center gap-2 mb-4">
               <span className="text-sm font-semibold text-gray-700 w-12">Subject:</span>
               <Input
@@ -248,47 +220,29 @@ export default function EnhancedEmailComposer({
               />
             </div>
 
-            {/* Toolbar */}
             <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowTemplates(!showTemplates)}
-                className="rounded-[8px]"
-              >
+              <Button size="sm" variant="outline" onClick={() => setShowTemplates(!showTemplates)} className="rounded-[8px]">
                 <FileText className="w-4 h-4 mr-1" />
                 Templates
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowEntityLinker(!showEntityLinker)}
-                className="rounded-[8px]"
-              >
+              <Button size="sm" variant="outline" onClick={() => setShowEntityLinker(!showEntityLinker)} className="rounded-[8px]">
                 <LinkIcon className="w-4 h-4 mr-1" />
                 Link to {linkedEntity ? linkedEntity.type : 'Entity'}
               </Button>
             </div>
 
-            {/* Template Selector */}
             {showTemplates && (
               <div className="mb-4">
                 <TemplateSelector onSelect={applyTemplate} onClose={() => setShowTemplates(false)} />
               </div>
             )}
 
-            {/* Entity Linker */}
             {showEntityLinker && (
               <div className="mb-4">
-                <EntityLinker
-                  selectedEntity={linkedEntity}
-                  onSelect={setLinkedEntity}
-                  onClose={() => setShowEntityLinker(false)}
-                />
+                <EntityLinker selectedEntity={linkedEntity} onSelect={setLinkedEntity} onClose={() => setShowEntityLinker(false)} />
               </div>
             )}
 
-            {/* Rich Text Editor */}
             <div className="mb-4">
               <ReactQuill
                 value={body}
@@ -307,18 +261,13 @@ export default function EnhancedEmailComposer({
               />
             </div>
 
-            {/* Attachments */}
             {attachments.length > 0 && (
               <div className="mb-4 space-y-2">
                 {attachments.map((att, index) => (
                   <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-[10px]">
                     <Paperclip className="w-4 h-4 text-gray-500" />
                     <span className="text-sm text-gray-700 flex-1">{att.name}</span>
-                    <button
-                      onClick={() => removeAttachment(index)}
-                      className="p-1 hover:bg-gray-200 rounded-[6px]"
-                      disabled={sending}
-                    >
+                    <button onClick={() => removeAttachment(index)} className="p-1 hover:bg-gray-200 rounded-[6px]" disabled={sending}>
                       <Trash2 className="w-4 h-4 text-red-600" />
                     </button>
                   </div>
@@ -326,17 +275,10 @@ export default function EnhancedEmailComposer({
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex items-center justify-between pt-4 border-t border-gray-200">
               <div className="flex gap-2">
                 <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    disabled={uploading || sending}
-                  />
+                  <input type="file" multiple onChange={handleFileUpload} className="hidden" disabled={uploading || sending} />
                   <div className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-[10px] transition-colors">
                     {uploading ? (
                       <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
