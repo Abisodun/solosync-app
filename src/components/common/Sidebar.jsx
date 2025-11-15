@@ -15,7 +15,8 @@ import {
   Zap,
   Settings as SettingsIcon,
   FolderKanban,
-  MessageSquare
+  MessageSquare,
+  Mail
 } from 'lucide-react';
 import Logo from '../landing/Logo';
 
@@ -30,6 +31,7 @@ const navigation = [
   { name: 'Content', icon: Calendar, page: 'Content' },
   { name: 'Habits', icon: Heart, page: 'Habits' },
   { name: 'Tax Prep', icon: Calculator, page: 'TaxPrep' },
+  { name: 'Email Templates', icon: Mail, page: 'EmailTemplates' },
   { name: 'Feedback', icon: MessageSquare, page: 'Feedback' }
 ];
 
