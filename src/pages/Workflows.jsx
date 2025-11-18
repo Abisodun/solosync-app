@@ -389,14 +389,11 @@ export default function Workflows() {
     <>
       <Sidebar currentPage="Workflows" />
       
-      <div className="w-full" style={{
+      <div className="w-full pt-[72px] md:pt-6" style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
-        padding: '24px 16px',
-        paddingTop: '72px'
-      }}
-      className="md:pt-6"
-      >
+        padding: '24px 16px'
+      }}>
         <div className="w-full max-w-full" style={{ padding: '0 4px' }}>
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
