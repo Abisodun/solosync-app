@@ -428,279 +428,284 @@ export default function Finance() {
     <>
       <Sidebar currentPage="Finance" />
       
-      <div style={{
+      <div className="w-full" style={{
         marginLeft: '260px',
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
-        padding: '32px 24px'
-      }}>
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Finance Tracker</h1>
-            <p className="text-gray-600 mt-1">Manage income, expenses, budgets & invoices</p>
-          </div>
-          <div className="flex gap-3 flex-wrap">
-            <Button
-              onClick={() => {
-                setShowTransactionForm(!showTransactionForm);
-                setShowInvoiceForm(false);
-                setShowBudgetForm(false);
-                setShowRecurringForm(false);
-                setEditingTransaction(null);
-              }}
-              className="rounded-[14px] text-white"
-              style={{ background: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' }}
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Transaction
-            </Button>
-            <Button
-              onClick={() => {
-                setShowRecurringForm(!showRecurringForm);
-                setShowTransactionForm(false);
-                setShowInvoiceForm(false);
-                setShowBudgetForm(false);
-                setEditingRecurring(null);
-                setActiveTab('recurring');
-              }}
-              className="rounded-[14px] text-white"
-              style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
-            >
-              <Repeat className="w-5 h-5 mr-2" />
-              Recurring
-            </Button>
-            <Button
-              onClick={() => {
-                setShowBudgetForm(!showBudgetForm);
-                setShowTransactionForm(false);
-                setShowInvoiceForm(false);
-                setShowRecurringForm(false);
-                setEditingBudget(null);
-                setActiveTab('budgets');
-              }}
-              className="rounded-[14px] text-white"
-              style={{ background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)' }}
-            >
-              <Target className="w-5 h-5 mr-2" />
-              Budget
-            </Button>
-            <Button
-              onClick={() => {
-                setShowInvoiceForm(!showInvoiceForm);
-                setShowTransactionForm(false);
-                setShowBudgetForm(false);
-                setShowRecurringForm(false);
-                setEditingInvoice(null);
-                setActiveTab('invoices');
-              }}
-              className="rounded-[14px] text-white"
-              style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}
-            >
-              <FileText className="w-5 h-5 mr-2" />
-              Invoice
-            </Button>
-          </div>
-        </div>
-
-        {/* Budget Alerts - Show on all tabs */}
-        <BudgetAlerts 
-          budgets={currentMonthBudgets}
-          transactions={currentMonthTransactions}
-          currency={user?.currency}
-        />
-
-        {/* Tabs */}
-        <div className="flex gap-2 mb-8 overflow-x-auto">
-          {[
-            { id: 'overview', label: 'Overview', icon: TrendingUp },
-            { id: 'recurring', label: 'Recurring', icon: Repeat },
-            { id: 'budgets', label: 'Budgets', icon: Target },
-            { id: 'invoices', label: 'Invoices', icon: FileText }
-          ].map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-[14px] font-medium transition-all whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-                style={activeTab === tab.id ? {
-                  background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
-                  boxShadow: '0 4px 16px rgba(139, 92, 246, 0.3)'
-                } : {}}
+        padding: '24px 16px', // Changed from 32px 24px
+        paddingTop: '72px'
+      }}
+      className="md:pt-6" // Added md:pt-6
+      >
+        <div className="w-full max-w-full" style={{ padding: '0 4px' }}> {/* New div wrapper */}
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">Finance Tracker</h1>
+              <p className="text-gray-600 mt-1">Manage income, expenses, budgets & invoices</p>
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              <Button
+                onClick={() => {
+                  setShowTransactionForm(!showTransactionForm);
+                  setShowInvoiceForm(false);
+                  setShowBudgetForm(false);
+                  setShowRecurringForm(false);
+                  setEditingTransaction(null);
+                }}
+                className="rounded-[14px] text-white"
+                style={{ background: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)' }}
               >
-                <Icon className="w-5 h-5" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Forms */}
-        <AnimatePresence>
-          {showTransactionForm && (
-            <TransactionForm
-              transaction={editingTransaction}
-              onSubmit={handleTransactionSubmit}
-              onCancel={resetTransactionForm}
-            />
-          )}
-          {showInvoiceForm && (
-            <InvoiceForm
-              invoice={editingInvoice}
-              onSubmit={handleInvoiceSubmit}
-              onCancel={resetInvoiceForm}
-            />
-          )}
-          {showBudgetForm && (
-            <BudgetForm
-              budget={editingBudget}
-              onSubmit={handleBudgetSubmit}
-              onCancel={resetBudgetForm}
-            />
-          )}
-          {showRecurringForm && (
-            <RecurringTransactionForm
-              transaction={editingRecurring}
-              onSubmit={handleRecurringSubmit}
-              onCancel={resetRecurringForm}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Content based on active tab */}
-        {activeTab === 'overview' && (
-          <>
-            {/* Stats Cards */}
-            <div className="mb-8">
-              <FinanceStats
-                totalIncome={totalIncome}
-                totalExpenses={totalExpenses}
-                netProfit={netProfit}
-                unpaidAmount={unpaidAmount}
-                currency={user?.currency}
-              />
+                <Plus className="w-5 h-5 mr-2" />
+                Transaction
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowRecurringForm(!showRecurringForm);
+                  setShowTransactionForm(false);
+                  setShowInvoiceForm(false);
+                  setShowBudgetForm(false);
+                  setEditingRecurring(null);
+                  setActiveTab('recurring');
+                }}
+                className="rounded-[14px] text-white"
+                style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+              >
+                <Repeat className="w-5 h-5 mr-2" />
+                Recurring
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowBudgetForm(!showBudgetForm);
+                  setShowTransactionForm(false);
+                  setShowInvoiceForm(false);
+                  setShowRecurringForm(false);
+                  setEditingBudget(null);
+                  setActiveTab('budgets');
+                }}
+                className="rounded-[14px] text-white"
+                style={{ background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)' }}
+              >
+                <Target className="w-5 h-5 mr-2" />
+                Budget
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowInvoiceForm(!showInvoiceForm);
+                  setShowTransactionForm(false);
+                  setShowBudgetForm(false);
+                  setShowRecurringForm(false);
+                  setEditingInvoice(null);
+                  setActiveTab('invoices');
+                }}
+                className="rounded-[14px] text-white"
+                style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}
+              >
+                <FileText className="w-5 h-5 mr-2" />
+                Invoice
+              </Button>
             </div>
+          </div>
 
-            {/* AI Financial Forecast Section */}
-            <div className="mb-8">
-              <AIForecast transactions={transactions.filter(t => !t.is_template)} user={user} />
-            </div>
-
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Income vs Expenses</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                    <XAxis dataKey="month" stroke="#6B7280" />
-                    <YAxis stroke="#6B7280" />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="income" fill="#86EFAC" name="Income" radius={[8, 8, 0, 0]} />
-                    <Bar dataKey="expenses" fill="#FCA5A5" name="Expenses" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-
-              <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Spending by Category</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card>
-            </div>
-
-            {/* Recent Transactions */}
-            <TransactionList
-              transactions={transactions}
-              onEdit={handleEditTransaction}
-              onDelete={(id) => deleteTransactionMutation.mutate(id)}
-              currency={user?.currency}
-            />
-          </>
-        )}
-
-        {activeTab === 'recurring' && (
-          <RecurringTransactionsList
-            transactions={recurringTransactions}
-            onEdit={handleEditRecurring}
-            onDelete={(id) => deleteRecurringMutation.mutate(id)}
-            onToggleActive={handleToggleRecurringActive}
+          {/* Budget Alerts - Show on all tabs */}
+          <BudgetAlerts 
+            budgets={currentMonthBudgets}
+            transactions={currentMonthTransactions}
             currency={user?.currency}
           />
-        )}
 
-        {activeTab === 'budgets' && (
-          <>
-            {/* Budget Overview Stats */}
-            <BudgetOverview
-              budgets={currentMonthBudgets}
-              transactions={currentMonthTransactions}
+          {/* Tabs */}
+          <div className="flex gap-2 mb-8 overflow-x-auto">
+            {[
+              { id: 'overview', label: 'Overview', icon: TrendingUp },
+              { id: 'recurring', label: 'Recurring', icon: Repeat },
+              { id: 'budgets', label: 'Budgets', icon: Target },
+              { id: 'invoices', label: 'Invoices', icon: FileText }
+            ].map(tab => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-[14px] font-medium transition-all whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                  style={activeTab === tab.id ? {
+                    background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
+                    boxShadow: '0 4px 16px rgba(139, 92, 246, 0.3)'
+                  } : {}}
+                >
+                  <Icon className="w-5 h-5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Forms */}
+          <AnimatePresence>
+            {showTransactionForm && (
+              <TransactionForm
+                transaction={editingTransaction}
+                onSubmit={handleTransactionSubmit}
+                onCancel={resetTransactionForm}
+              />
+            )}
+            {showInvoiceForm && (
+              <InvoiceForm
+                invoice={editingInvoice}
+                onSubmit={handleInvoiceSubmit}
+                onCancel={resetInvoiceForm}
+              />
+            )}
+            {showBudgetForm && (
+              <BudgetForm
+                budget={editingBudget}
+                onSubmit={handleBudgetSubmit}
+                onCancel={resetBudgetForm}
+              />
+            )}
+            {showRecurringForm && (
+              <RecurringTransactionForm
+                transaction={editingRecurring}
+                onSubmit={handleRecurringSubmit}
+                onCancel={resetRecurringForm}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Content based on active tab */}
+          {activeTab === 'overview' && (
+            <>
+              {/* Stats Cards */}
+              <div className="mb-8">
+                <FinanceStats
+                  totalIncome={totalIncome}
+                  totalExpenses={totalExpenses}
+                  netProfit={netProfit}
+                  unpaidAmount={unpaidAmount}
+                  currency={user?.currency}
+                />
+              </div>
+
+              {/* AI Financial Forecast Section */}
+              <div className="mb-8">
+                <AIForecast transactions={transactions.filter(t => !t.is_template)} user={user} />
+              </div>
+
+              {/* Charts */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+                  <h3 className="text-lg font-bold text-gray-800 mb-4">Income vs Expenses</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis dataKey="month" stroke="#6B7280" />
+                      <YAxis stroke="#6B7280" />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="income" fill="#86EFAC" name="Income" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="expenses" fill="#FCA5A5" name="Expenses" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Card>
+
+                <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+                  <h3 className="text-lg font-bold text-gray-800 mb-4">Spending by Category</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Card>
+              </div>
+
+              {/* Recent Transactions */}
+              <TransactionList
+                transactions={transactions}
+                onEdit={handleEditTransaction}
+                onDelete={(id) => deleteTransactionMutation.mutate(id)}
+                currency={user?.currency}
+              />
+            </>
+          )}
+
+          {activeTab === 'recurring' && (
+            <RecurringTransactionsList
+              transactions={recurringTransactions}
+              onEdit={handleEditRecurring}
+              onDelete={(id) => deleteRecurringMutation.mutate(id)}
+              onToggleActive={handleToggleRecurringActive}
               currency={user?.currency}
-            />
-
-            {/* Budget Progress */}
-            <BudgetProgress
-              budgets={currentMonthBudgets}
-              transactions={currentMonthTransactions}
-              currency={user?.currency}
-              onEdit={handleEditBudget}
-              onDelete={(id) => deleteBudgetMutation.mutate(id)}
-            />
-          </>
-        )}
-
-        {activeTab === 'invoices' && (
-          <>
-            {/* Invoice Stats */}
-            <div className="mb-8">
-              <InvoiceStats invoices={invoices} currency={user?.currency} />
-            </div>
-
-            {/* Invoice List */}
-            <InvoiceList
-              invoices={invoices}
-              onEdit={handleEditInvoice}
-              onDelete={(id) => deleteInvoiceMutation.mutate(id)}
-              onView={setViewingInvoice}
-              onStatusChange={handleInvoiceStatusChange}
-              currency={user?.currency}
-            />
-          </>
-        )}
-
-        {/* Invoice View Modal */}
-        <AnimatePresence>
-          {viewingInvoice && (
-            <InvoiceView
-              invoice={viewingInvoice}
-              user={user}
-              onClose={() => setViewingInvoice(null)}
             />
           )}
-        </AnimatePresence>
+
+          {activeTab === 'budgets' && (
+            <>
+              {/* Budget Overview Stats */}
+              <BudgetOverview
+                budgets={currentMonthBudgets}
+                transactions={currentMonthTransactions}
+                currency={user?.currency}
+              />
+
+              {/* Budget Progress */}
+              <BudgetProgress
+                budgets={currentMonthBudgets}
+                transactions={currentMonthTransactions}
+                currency={user?.currency}
+                onEdit={handleEditBudget}
+                onDelete={(id) => deleteBudgetMutation.mutate(id)}
+              />
+            </>
+          )}
+
+          {activeTab === 'invoices' && (
+            <>
+              {/* Invoice Stats */}
+              <div className="mb-8">
+                <InvoiceStats invoices={invoices} currency={user?.currency} />
+              </div>
+
+              {/* Invoice List */}
+              <InvoiceList
+                invoices={invoices}
+                onEdit={handleEditInvoice}
+                onDelete={(id) => deleteInvoiceMutation.mutate(id)}
+                onView={setViewingInvoice}
+                onStatusChange={handleInvoiceStatusChange}
+                currency={user?.currency}
+              />
+            </>
+          )}
+
+          {/* Invoice View Modal */}
+          <AnimatePresence>
+            {viewingInvoice && (
+              <InvoiceView
+                invoice={viewingInvoice}
+                user={user}
+                onClose={() => setViewingInvoice(null)}
+              />
+            )}
+          </AnimatePresence>
+        </div> {/* End of new div wrapper */}
       </div>
     </>
   );

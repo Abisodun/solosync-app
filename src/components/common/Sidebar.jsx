@@ -53,19 +53,25 @@ export default function Sidebar({ currentPage }) {
 
   return (
     <>
-      {/* Mobile Hamburger Button */}
+      {/* Mobile Hamburger Button - Now with proper z-index */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 p-3 rounded-[12px] bg-slate-900 text-white shadow-lg"
-        style={{ display: isMobileOpen ? 'none' : 'block' }}
+        className="md:hidden fixed z-[100] p-2 rounded-[10px] bg-slate-900 text-white shadow-lg"
+        style={{ 
+          top: '16px', 
+          left: '16px',
+          display: isMobileOpen ? 'none' : 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
       >
-        <Menu className="w-6 h-6" />
+        <Menu className="w-5 h-5" />
       </button>
 
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-[998]"
           onClick={closeMobileMenu}
         />
       )}
@@ -79,7 +85,7 @@ export default function Sidebar({ currentPage }) {
           bottom: 0,
           width: '260px',
           backgroundColor: '#0f172a',
-          zIndex: 1000,
+          zIndex: 999,
           overflowY: 'auto',
           boxShadow: '4px 0 24px rgba(0, 0, 0, 0.1)',
           display: 'flex',

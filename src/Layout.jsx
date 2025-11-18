@@ -69,7 +69,7 @@ export default function Layout({ children, currentPageName }) {
       {/* Habit Reminders - Global */}
       <HabitReminders />
 
-      {/* MAIN CONTENT - Responsive wrapper */}
+      {/* MAIN CONTENT - Responsive wrapper with proper spacing for mobile hamburger */}
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
@@ -81,8 +81,10 @@ export default function Layout({ children, currentPageName }) {
           style={{
             width: '100%',
             maxWidth: '100vw',
-            overflowX: 'hidden'
+            overflowX: 'hidden',
+            paddingTop: '0' // No padding on desktop
           }}
+          className="pt-0 md:pt-0" // Mobile gets no padding since pages handle their own
         >
           {children}
         </div>

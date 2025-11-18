@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -159,12 +160,13 @@ Generate ONE short, actionable productivity tip (max 20 words) to help them stay
     <>
       <Sidebar currentPage="Dashboard" />
       
-      <div className="w-full" style={{
+      <div className="w-full md:pt-6" style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
-        padding: '24px 16px'
+        padding: '24px 16px',
+        paddingTop: '72px'
       }}>
-        <div className="w-full max-w-full" style={{ padding: '0 8px' }}>
+        <div className="w-full max-w-full" style={{ padding: '0 4px' }}>
           {/* Header */}
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
