@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -428,16 +427,12 @@ export default function Finance() {
     <>
       <Sidebar currentPage="Finance" />
       
-      <div className="w-full" style={{
-        marginLeft: '260px',
+      <div className="w-full pt-[72px] md:pt-6" style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
-        padding: '24px 16px', // Changed from 32px 24px
-        paddingTop: '72px'
-      }}
-      className="md:pt-6" // Added md:pt-6
-      >
-        <div className="w-full max-w-full" style={{ padding: '0 4px' }}> {/* New div wrapper */}
+        padding: '24px 16px'
+      }}>
+        <div className="w-full max-w-full" style={{ padding: '0 4px' }}>
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
@@ -705,7 +700,7 @@ export default function Finance() {
               />
             )}
           </AnimatePresence>
-        </div> {/* End of new div wrapper */}
+        </div>
       </div>
     </>
   );

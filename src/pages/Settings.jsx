@@ -433,14 +433,13 @@ export default function Settings() {
     <>
       <Sidebar currentPage="Settings" />
       
-      <div className="w-full" style={{
+      <div className="w-full pt-[72px] md:pt-6" style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
-        padding: '24px 16px',
-        paddingTop: '72px'
+        padding: '24px 16px'
       }}
       >
-        <div className="w-full max-w-full md:pt-6" style={{ padding: '0 4px' }}>
+        <div className="w-full max-w-full" style={{ padding: '0 4px' }}>
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
             <p className="text-gray-600 mt-1">Manage your account and preferences</p>
