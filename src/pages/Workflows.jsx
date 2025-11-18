@@ -401,7 +401,7 @@ export default function Workflows() {
               <h1 className="text-3xl font-bold text-gray-800">Workflow Automation</h1>
               <p className="text-gray-600 mt-1">Automate your business processes</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <Button
                 onClick={handleRunNow}
                 disabled={isRunning || activeWorkflows === 0}
