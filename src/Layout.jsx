@@ -26,14 +26,12 @@ export default function Layout({ children, currentPageName }) {
       }
     } catch (error) {
       console.error('Error loading user in layout:', error);
-      // Only set loading to false, don't fail silently
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // Don't load user for public pages
     if (currentPageName === 'Landing' || currentPageName === 'Onboarding') {
       setLoading(false);
       return;
@@ -44,7 +42,7 @@ export default function Layout({ children, currentPageName }) {
     return () => clearInterval(interval);
   }, [loadUser, currentPageName]);
 
-  // Don't show layout on landing or onboarding pages - just render children
+  // Don't show layout on landing or onboarding pages
   if (currentPageName === 'Landing' || currentPageName === 'Onboarding') {
     return <>{children}</>;
   }
@@ -58,7 +56,7 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  // If not loading but no user, redirect to landing (authentication failed)
+  // If not loading but no user, redirect to landing
   if (!user) {
     if (typeof window !== 'undefined') {
       window.location.href = createPageUrl('Landing');
@@ -71,12 +69,23 @@ export default function Layout({ children, currentPageName }) {
       {/* Habit Reminders - Global */}
       <HabitReminders />
 
-      {/* MAIN CONTENT */}
+      {/* MAIN CONTENT - Responsive wrapper */}
       <div style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)'
+        background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
+        width: '100%',
+        overflowX: 'hidden'
       }}>
-        {children}
+        <div 
+          className="md:ml-[260px]"
+          style={{
+            width: '100%',
+            maxWidth: '100vw',
+            overflowX: 'hidden'
+          }}
+        >
+          {children}
+        </div>
       </div>
     </>
   );
