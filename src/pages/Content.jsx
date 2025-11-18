@@ -249,12 +249,12 @@ export default function Content() {
         paddingTop: '72px'
       }}>
         <div className="w-full max-w-full" style={{ padding: '0 4px' }}>
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-800">Content Calendar</h1>
               <p className="text-gray-600 mt-1">Plan and schedule your content across platforms</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               {/* View Toggle */}
               <div className="flex items-center gap-1 p-1 bg-white rounded-[12px] border border-gray-200">
                 <Button
