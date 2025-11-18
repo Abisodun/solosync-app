@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Target, Trophy, Pause, Play, CheckCircle2, Edit2, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } = from 'date-fns';
+import { format } from 'date-fns';
 import Sidebar from '../components/common/Sidebar';
 import AIGoalBreakdown from '../components/goals/AIGoalBreakdown';
 
@@ -110,12 +109,14 @@ export default function Goals() {
     <>
       <Sidebar currentPage="Goals" />
       
-      <div className="w-full md:pt-6" style={{
+      <div className="w-full" style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
         padding: '24px 16px',
         paddingTop: '72px'
-      }}>
+      }}
+      className="md:pt-6"
+      >
         <div className="w-full max-w-full" style={{ padding: '0 4px' }}>
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
