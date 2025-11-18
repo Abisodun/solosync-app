@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -90,76 +91,80 @@ export default function EmailTemplatesPage() {
     <>
       <Sidebar currentPage="EmailTemplates" />
       
-      <div style={{
-        marginLeft: '260px',
+      <div className="w-full" style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
-        padding: '32px 24px'
-      }}>
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Email Templates</h1>
-            <p className="text-gray-600 mt-1">Create reusable templates for automated communications</p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              onClick={handleSendReminders}
-              variant="outline"
-              className="rounded-[14px] border-amber-300 text-amber-700 hover:bg-amber-50"
-            >
-              <Zap className="w-4 h-4 mr-2" />
-              Send Overdue Reminders
-            </Button>
-            <Button
-              onClick={() => {
-                setEditingTemplate(null);
-                setShowForm(true);
-              }}
-              className="rounded-[14px] text-white"
-              style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              New Template
-            </Button>
-          </div>
-        </div>
-
-        {/* Info Card */}
-        <Card className="p-5 rounded-[16px] mb-6" style={{ background: 'rgba(147, 197, 253, 0.1)', border: '1px solid rgba(147, 197, 253, 0.3)' }}>
-          <div className="flex items-start gap-3">
-            <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+        padding: '24px 16px',
+        paddingTop: '72px'
+      }}
+      className="md:pt-6"
+      >
+        <div className="w-full max-w-full" style={{ padding: '0 4px' }}>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
-              <h3 className="font-semibold text-blue-900 mb-1">About Email Templates</h3>
-              <p className="text-sm text-blue-800">
-                Create templates with placeholders like <code className="px-1 py-0.5 bg-white rounded text-xs">{'{{client_name}}'}</code> that get replaced with actual data when sent. 
-                Templates can be used manually or triggered automatically by workflows.
-              </p>
+              <h1 className="text-3xl font-bold text-gray-800">Email Templates</h1>
+              <p className="text-gray-600 mt-1">Create reusable templates for automated communications</p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleSendReminders}
+                variant="outline"
+                className="rounded-[14px] border-amber-300 text-amber-700 hover:bg-amber-50"
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                Send Overdue Reminders
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditingTemplate(null);
+                  setShowForm(true);
+                }}
+                className="rounded-[14px] text-white"
+                style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                New Template
+              </Button>
             </div>
           </div>
-        </Card>
 
-        {/* Form */}
-        <AnimatePresence>
-          {showForm && (
-            <EmailTemplateForm
-              template={editingTemplate}
-              onSubmit={handleSubmit}
-              onCancel={() => {
-                setShowForm(false);
-                setEditingTemplate(null);
-              }}
-            />
-          )}
-        </AnimatePresence>
+          {/* Info Card */}
+          <Card className="p-5 rounded-[16px] mb-6" style={{ background: 'rgba(147, 197, 253, 0.1)', border: '1px solid rgba(147, 197, 253, 0.3)' }}>
+            <div className="flex items-start gap-3">
+              <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-blue-900 mb-1">About Email Templates</h3>
+                <p className="text-sm text-blue-800">
+                  Create templates with placeholders like <code className="px-1 py-0.5 bg-white rounded text-xs">{'{{client_name}}'}</code> that get replaced with actual data when sent. 
+                  Templates can be used manually or triggered automatically by workflows.
+                </p>
+              </div>
+            </div>
+          </Card>
 
-        {/* Templates List */}
-        <EmailTemplateList
-          templates={templates}
-          onEdit={handleEdit}
-          onDelete={(id) => deleteMutation.mutate(id)}
-          onDuplicate={handleDuplicate}
-        />
+          {/* Form */}
+          <AnimatePresence>
+            {showForm && (
+              <EmailTemplateForm
+                template={editingTemplate}
+                onSubmit={handleSubmit}
+                onCancel={() => {
+                  setShowForm(false);
+                  setEditingTemplate(null);
+                }}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Templates List */}
+          <EmailTemplateList
+            templates={templates}
+            onEdit={handleEdit}
+            onDelete={(id) => deleteMutation.mutate(id)}
+            onDuplicate={handleDuplicate}
+          />
+        </div>
       </div>
     </>
   );

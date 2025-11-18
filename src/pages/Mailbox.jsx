@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -88,7 +89,13 @@ export default function MailboxPage() {
     <>
       <Sidebar currentPage="Mailbox" />
       
-      <div style={{ marginLeft: '260px', minHeight: '100vh', background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)' }}>
+      <div className="w-full" style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
+        paddingTop: '72px'
+      }}
+      className="md:pt-0"
+      >
         <div className="flex h-screen">
           {/* Email List */}
           <div className={`${selectedEmail ? 'w-1/3' : 'w-full'} border-r border-gray-200 bg-white flex flex-col`}>

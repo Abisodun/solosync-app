@@ -389,169 +389,173 @@ export default function Workflows() {
     <>
       <Sidebar currentPage="Workflows" />
       
-      <div style={{
-        marginLeft: '260px',
+      <div className="w-full" style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
-        padding: '32px 24px'
-      }}>
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Workflow Automation</h1>
-            <p className="text-gray-600 mt-1">Automate your business processes</p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              onClick={handleRunNow}
-              disabled={isRunning || activeWorkflows === 0}
-              variant="outline"
-              className="rounded-[14px]"
-            >
-              <Play className={`w-5 h-5 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
-              {isRunning ? 'Running...' : 'Run Now'}
-            </Button>
-            <Button
-              onClick={() => {
-                setShowTemplates(!showTemplates);
-                setShowForm(false);
-              }}
-              variant="outline"
-              className="rounded-[14px]"
-            >
-              <Zap className="w-5 h-5 mr-2" />
-              Templates
-            </Button>
-            <Button
-              onClick={() => {
-                setShowForm(!showForm);
-                setShowTemplates(false);
-                setEditingWorkflow(null);
-              }}
-              className="rounded-[14px] text-white"
-              style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              New Workflow
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'Active Workflows', value: activeWorkflows, icon: Zap, color: '#A78BFA' },
-            { label: 'Total Workflows', value: workflows.length, icon: Clock, color: '#93C5FD' },
-            { label: 'Successful (24h)', value: recentSuccessful, icon: CheckCircle2, color: '#10B981' },
-            { label: 'Failed (24h)', value: recentFailed, icon: XCircle, color: '#EF4444' }
-          ].map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Card
-                key={index}
-                className="p-5 rounded-[18px]"
-                style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}
+        padding: '24px 16px',
+        paddingTop: '72px'
+      }}
+      className="md:pt-6"
+      >
+        <div className="w-full max-w-full" style={{ padding: '0 4px' }}>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">Workflow Automation</h1>
+              <p className="text-gray-600 mt-1">Automate your business processes</p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleRunNow}
+                disabled={isRunning || activeWorkflows === 0}
+                variant="outline"
+                className="rounded-[14px]"
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-12 h-12 rounded-[14px] flex items-center justify-center"
-                    style={{ background: `${stat.color}22` }}
-                  >
-                    <Icon className="w-6 h-6" style={{ color: stat.color }} />
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-600">{stat.label}</div>
-                    <div className="text-2xl font-bold text-gray-800">{stat.value}</div>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-
-        {lastRun && (
-          <div className="mb-6 p-4 rounded-[14px] bg-green-50 border border-green-200">
-            <p className="text-sm text-green-800">
-              ✓ Workflows last checked: {lastRun.toLocaleTimeString()}
-            </p>
+                <Play className={`w-5 h-5 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
+                {isRunning ? 'Running...' : 'Run Now'}
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowTemplates(!showTemplates);
+                  setShowForm(false);
+                }}
+                variant="outline"
+                className="rounded-[14px]"
+              >
+                <Zap className="w-5 h-5 mr-2" />
+                Templates
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowForm(!showForm);
+                  setShowTemplates(false);
+                  setEditingWorkflow(null);
+                }}
+                className="rounded-[14px] text-white"
+                style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                New Workflow
+              </Button>
+            </div>
           </div>
-        )}
 
-        {/* Templates View */}
-        <AnimatePresence>
-          {showTemplates && (
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-800">Workflow Templates</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowTemplates(false)}
-                  className="rounded-[10px]"
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+            {[
+              { label: 'Active Workflows', value: activeWorkflows, icon: Zap, color: '#A78BFA' },
+              { label: 'Total Workflows', value: workflows.length, icon: Clock, color: '#93C5FD' },
+              { label: 'Successful (24h)', value: recentSuccessful, icon: CheckCircle2, color: '#10B981' },
+              { label: 'Failed (24h)', value: recentFailed, icon: XCircle, color: '#EF4444' }
+            ].map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <Card
+                  key={index}
+                  className="p-5 rounded-[18px]"
+                  style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}
                 >
-                  Hide Templates
-                </Button>
-              </div>
-              <WorkflowTemplates onSelectTemplate={handleSelectTemplate} />
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-12 h-12 rounded-[14px] flex items-center justify-center"
+                      style={{ background: `${stat.color}22` }}
+                    >
+                      <Icon className="w-6 h-6" style={{ color: stat.color }} />
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-600">{stat.label}</div>
+                      <div className="text-2xl font-bold text-gray-800">{stat.value}</div>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+
+          {lastRun && (
+            <div className="mb-6 p-4 rounded-[14px] bg-green-50 border border-green-200">
+              <p className="text-sm text-green-800">
+                ✓ Workflows last checked: {lastRun.toLocaleTimeString()}
+              </p>
             </div>
           )}
-        </AnimatePresence>
 
-        {/* Workflow Form */}
-        <AnimatePresence>
-          {showForm && (
-            <WorkflowForm
-              workflow={editingWorkflow}
-              onSubmit={handleSubmit}
-              onCancel={resetForm}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Workflow List */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Your Workflows</h2>
-          <WorkflowList
-            workflows={workflows}
-            onEdit={handleEdit}
-            onDelete={(id) => deleteWorkflowMutation.mutate(id)}
-            onToggle={handleToggle}
-          />
-        </div>
-
-        {/* Recent Executions */}
-        {executions.length > 0 && (
-          <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Executions</h2>
-            <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-              <div className="space-y-3">
-                {executions.slice(0, 10).map((execution) => (
-                  <div
-                    key={execution.id}
-                    className="flex items-center justify-between p-3 rounded-[12px] bg-gray-50"
+          {/* Templates View */}
+          <AnimatePresence>
+            {showTemplates && (
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-800">Workflow Templates</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTemplates(false)}
+                    className="rounded-[10px]"
                   >
-                    <div className="flex items-center gap-3">
-                      {execution.status === 'success' ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-600" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-red-600" />
-                      )}
-                      <div>
-                        <div className="font-medium text-gray-800">{execution.workflow_name}</div>
-                        <div className="text-xs text-gray-500">
-                          {execution.actions_performed?.length || 0} action{execution.actions_performed?.length !== 1 ? 's' : ''} performed
+                    Hide Templates
+                  </Button>
+                </div>
+                <WorkflowTemplates onSelectTemplate={handleSelectTemplate} />
+              </div>
+            )}
+          </AnimatePresence>
+
+          {/* Workflow Form */}
+          <AnimatePresence>
+            {showForm && (
+              <WorkflowForm
+                workflow={editingWorkflow}
+                onSubmit={handleSubmit}
+                onCancel={resetForm}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Workflow List */}
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Your Workflows</h2>
+            <WorkflowList
+              workflows={workflows}
+              onEdit={handleEdit}
+              onDelete={(id) => deleteWorkflowMutation.mutate(id)}
+              onToggle={handleToggle}
+            />
+          </div>
+
+          {/* Recent Executions */}
+          {executions.length > 0 && (
+            <div>
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Executions</h2>
+              <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+                <div className="space-y-3">
+                  {executions.slice(0, 10).map((execution) => (
+                    <div
+                      key={execution.id}
+                      className="flex items-center justify-between p-3 rounded-[12px] bg-gray-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        {execution.status === 'success' ? (
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-red-600" />
+                        )}
+                        <div>
+                          <div className="font-medium text-gray-800">{execution.workflow_name}</div>
+                          <div className="text-xs text-gray-500">
+                            {execution.actions_performed?.length || 0} action{execution.actions_performed?.length !== 1 ? 's' : ''} performed
+                          </div>
                         </div>
                       </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(execution.execution_date).toLocaleString()}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {new Date(execution.execution_date).toLocaleString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-        )}
+                  ))}
+                </div>
+              </Card>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

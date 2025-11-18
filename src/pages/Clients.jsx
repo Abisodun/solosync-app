@@ -123,63 +123,65 @@ export default function Clients() {
     <>
       <Sidebar currentPage="Clients" />
       
-      <div style={{
-        marginLeft: '260px',
+      <div className="w-full md:pt-6" style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
-        padding: '32px 24px'
+        padding: '24px 16px',
+        paddingTop: '72px'
       }}>
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Client Management</h1>
-            <p className="text-gray-600 mt-1">Manage your client relationships and history</p>
+        <div className="w-full max-w-full" style={{ padding: '0 4px' }}>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">Client Management</h1>
+              <p className="text-gray-600 mt-1">Manage your client relationships and history</p>
+            </div>
+            <Button
+              onClick={() => {
+                setShowForm(!showForm);
+                setEditingClient(null);
+              }}
+              className="rounded-[14px] text-white"
+              style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
+              aria-label="Add new client"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              New Client
+            </Button>
           </div>
-          <Button
-            onClick={() => {
-              setShowForm(!showForm);
-              setEditingClient(null);
-            }}
-            className="rounded-[14px] text-white"
-            style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
-            aria-label="Add new client"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            New Client
-          </Button>
+
+          {/* Client Form */}
+          <AnimatePresence>
+            {showForm && (
+              <ClientForm
+                client={editingClient}
+                onSubmit={handleSubmit}
+                onCancel={resetForm}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Client List */}
+          <ClientList
+            clients={clients}
+            onEdit={handleEdit}
+            onDelete={(id) => deleteClientMutation.mutate(id)}
+            onView={handleView}
+          />
+
+          {/* Client View Modal */}
+          <AnimatePresence>
+            {viewingClient && (
+              <ClientView
+                client={viewingClient}
+                invoices={invoices}
+                transactions={transactions}
+                onClose={() => setViewingClient(null)}
+                onEdit={handleEdit}
+              />
+            )}
+          </AnimatePresence>
         </div>
-
-        {/* Client Form */}
-        <AnimatePresence>
-          {showForm && (
-            <ClientForm
-              client={editingClient}
-              onSubmit={handleSubmit}
-              onCancel={resetForm}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Client List */}
-        <ClientList
-          clients={clients}
-          onEdit={handleEdit}
-          onDelete={(id) => deleteClientMutation.mutate(id)}
-          onView={handleView}
-        />
-
-        {/* Client View Modal */}
-        <AnimatePresence>
-          {viewingClient && (
-            <ClientView
-              client={viewingClient}
-              invoices={invoices}
-              transactions={transactions}
-              onClose={() => setViewingClient(null)}
-              onEdit={handleEdit}
-            />
-          )}
-        </AnimatePresence>
       </div>
     </>
   );

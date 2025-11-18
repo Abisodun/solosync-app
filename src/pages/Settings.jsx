@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -432,338 +433,341 @@ export default function Settings() {
     <>
       <Sidebar currentPage="Settings" />
       
-      <div style={{
-        marginLeft: '260px',
+      <div className="w-full" style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 50%, #EFF6FF 100%)',
-        padding: '32px 24px'
-      }}>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
-          <p className="text-gray-600 mt-1">Manage your account and preferences</p>
-        </div>
-
-        {successMessage && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-[12px]">
-            <p className="text-sm text-green-800 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              {successMessage}
-            </p>
+        padding: '24px 16px',
+        paddingTop: '72px'
+      }}
+      >
+        <div className="w-full max-w-full md:pt-6" style={{ padding: '0 4px' }}>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
+            <p className="text-gray-600 mt-1">Manage your account and preferences</p>
           </div>
-        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Subscription Card - keeping existing code */}
-            <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}>
-                  <CreditCard className="w-6 h-6 text-white" />
+          {successMessage && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-[12px]">
+              <p className="text-sm text-green-800 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" />
+                {successMessage}
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Subscription Card */}
+              <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}>
+                    <CreditCard className="w-6 h-6 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800">Subscription & Billing</h2>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800">Subscription & Billing</h2>
-              </div>
 
-              <div className="mb-6 p-5 rounded-[16px]" style={{ background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%)' }}>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Current Plan</div>
-                    <div className="text-2xl font-bold text-gray-800 capitalize">
-                      {user.subscription_tier}
-                      {isOnTrial && <span className="ml-2 text-sm font-normal text-blue-600">(Trial)</span>}
-                    </div>
-                    {isOnTrial && user.trial_end_date && (
-                      <div className="text-sm text-gray-600 mt-2">
-                        Trial ends on {format(parseISO(user.trial_end_date), 'MMM dd, yyyy')}
+                <div className="mb-6 p-5 rounded-[16px]" style={{ background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%)' }}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="text-sm text-gray-600 mb-1">Current Plan</div>
+                      <div className="text-2xl font-bold text-gray-800 capitalize">
+                        {user.subscription_tier}
+                        {isOnTrial && <span className="ml-2 text-sm font-normal text-blue-600">(Trial)</span>}
                       </div>
-                    )}
-                    {isProTier && !isOnTrial && (
-                      <div className="text-sm text-gray-600 mt-2">
-                        Billing cycle: {user.billing_cycle || 'monthly'}
+                      {isOnTrial && user.trial_end_date && (
+                        <div className="text-sm text-gray-600 mt-2">
+                          Trial ends on {format(parseISO(user.trial_end_date), 'MMM dd, yyyy')}
+                        </div>
+                      )}
+                      {isProTier && !isOnTrial && (
+                        <div className="text-sm text-gray-600 mt-2">
+                          Billing cycle: {user.billing_cycle || 'monthly'}
+                        </div>
+                      )}
+                    </div>
+                    {isProTier && (
+                      <div className="px-4 py-2 rounded-[10px] bg-green-100 text-green-700 text-sm font-semibold">
+                        Active
                       </div>
                     )}
                   </div>
-                  {isProTier && (
-                    <div className="px-4 py-2 rounded-[10px] bg-green-100 text-green-700 text-sm font-semibold">
-                      Active
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Available Plans</h3>
-                {plans.map((plan) => {
-                  const Icon = plan.icon;
-                  const isCurrent = user.subscription_tier === plan.tier;
-                  
-                  return (
-                    <Card
-                      key={plan.tier}
-                      className={`p-6 rounded-[16px] ${isCurrent ? 'border-2 border-purple-400' : ''}`}
-                      style={{ background: 'rgba(255, 255, 255, 0.95)' }}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-4 flex-1">
-                          <div
-                            className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0"
-                            style={{ background: plan.gradient }}
-                          >
-                            <Icon className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h4 className="text-xl font-bold text-gray-800">{plan.name}</h4>
-                              {isCurrent && (
-                                <span className="px-3 py-1 rounded-[8px] bg-purple-100 text-purple-700 text-xs font-semibold">
-                                  Current Plan
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-2xl font-bold text-gray-800 mb-3">
-                              {plan.price}
-                              {plan.price !== 'Custom' && <span className="text-sm text-gray-500 font-normal ml-2">/{plan.period}</span>}
-                            </div>
-                            <div className="space-y-2">
-                              {plan.features.map((feature, i) => (
-                                <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
-                                  <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                  {feature}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          {!isCurrent && plan.tier === 'pro' && isFreeTier && (
-                            <Button
-                              onClick={startTrial}
-                              className="rounded-[12px] text-white font-semibold"
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4">Available Plans</h3>
+                  {plans.map((plan) => {
+                    const Icon = plan.icon;
+                    const isCurrent = user.subscription_tier === plan.tier;
+                    
+                    return (
+                      <Card
+                        key={plan.tier}
+                        className={`p-6 rounded-[16px] ${isCurrent ? 'border-2 border-purple-400' : ''}`}
+                        style={{ background: 'rgba(255, 255, 255, 0.95)' }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-4 flex-1">
+                            <div
+                              className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0"
                               style={{ background: plan.gradient }}
                             >
-                              Start 14-Day Trial
-                            </Button>
-                          )}
-                          {!isCurrent && plan.tier === 'enterprise' && (
-                            <Button
-                              className="rounded-[12px]"
-                              variant="outline"
-                            >
-                              Contact Sales
-                            </Button>
-                          )}
-                          {isCurrent && plan.tier !== 'free' && (
-                            <Button
-                              variant="outline"
-                              className="rounded-[12px]"
-                            >
-                              Manage
-                            </Button>
-                          )}
+                              <Icon className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h4 className="text-xl font-bold text-gray-800">{plan.name}</h4>
+                                {isCurrent && (
+                                  <span className="px-3 py-1 rounded-[8px] bg-purple-100 text-purple-700 text-xs font-semibold">
+                                    Current Plan
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-2xl font-bold text-gray-800 mb-3">
+                                {plan.price}
+                                {plan.price !== 'Custom' && <span className="text-sm text-gray-500 font-normal ml-2">/{plan.period}</span>}
+                              </div>
+                              <div className="space-y-2">
+                                {plan.features.map((feature, i) => (
+                                  <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                    {feature}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            {!isCurrent && plan.tier === 'pro' && isFreeTier && (
+                              <Button
+                                onClick={startTrial}
+                                className="rounded-[12px] text-white font-semibold"
+                                style={{ background: plan.gradient }}
+                              >
+                                Start 14-Day Trial
+                              </Button>
+                            )}
+                            {!isCurrent && plan.tier === 'enterprise' && (
+                              <Button
+                                className="rounded-[12px]"
+                                variant="outline"
+                              >
+                                Contact Sales
+                              </Button>
+                            )}
+                            {isCurrent && plan.tier !== 'free' && (
+                              <Button
+                                variant="outline"
+                                className="rounded-[12px]"
+                              >
+                                Manage
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-
-              <div className="mt-6 p-4 bg-blue-50 rounded-[12px] border border-blue-200">
-                <p className="text-sm text-blue-800">
-                  💳 <strong>Secure Payment:</strong> Payments are processed securely via Stripe. Your card information is never stored on our servers.
-                </p>
-              </div>
-            </Card>
-
-            {/* Dashboard Customization */}
-            <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F9A8D4 0%, #EC4899 100%)' }}>
-                  <LayoutDashboard className="w-6 h-6 text-white" />
+                      </Card>
+                    );
+                  })}
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800">Dashboard Widgets</h2>
-              </div>
 
-              <p className="text-sm text-gray-600 mb-6">
-                Choose which widgets to display on your dashboard. Changes are saved automatically.
-              </p>
-
-              <div className="space-y-4">
-                {dashboardWidgets.map((widget) => (
-                  <div key={widget.key} className="flex items-center justify-between p-4 rounded-[12px] bg-gray-50">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 text-sm">{widget.label}</h4>
-                      <p className="text-xs text-gray-600 mt-1">{widget.description}</p>
-                    </div>
-                    <Switch
-                      checked={dashboardPrefs[widget.key]}
-                      onCheckedChange={(checked) => handleDashboardPrefChange(widget.key, checked)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* Profile Settings */}
-            <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}>
-                  <User className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800">Profile Settings</h2>
-              </div>
-
-              {errors.submit && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-[12px]">
-                  <p className="text-sm text-red-800 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.submit}
+                <div className="mt-6 p-4 bg-blue-50 rounded-[12px] border border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    💳 <strong>Secure Payment:</strong> Payments are processed securely via Stripe. Your card information is never stored on our servers.
                   </p>
                 </div>
-              )}
+              </Card>
 
-              <form onSubmit={handleProfileUpdate} className="space-y-4">
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="full-name">
-                    Full Name *
-                  </label>
-                  <Input
-                    id="full-name"
-                    value={profileData.full_name}
-                    onChange={(e) => setProfileData({ ...profileData, full_name: validateInput(e.target.value, 100) })}
-                    className={`rounded-[12px] ${errors.full_name ? 'border-red-500' : ''}`}
-                    placeholder="Your full name"
-                    maxLength={100}
-                    aria-invalid={!!errors.full_name}
-                    aria-describedby={errors.full_name ? 'name-error' : undefined}
-                    required
-                  />
-                  {errors.full_name && (
-                    <p id="name-error" className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      {errors.full_name}
+              {/* Dashboard Customization */}
+              <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F9A8D4 0%, #EC4899 100%)' }}>
+                    <LayoutDashboard className="w-6 h-6 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800">Dashboard Widgets</h2>
+                </div>
+
+                <p className="text-sm text-gray-600 mb-6">
+                  Choose which widgets to display on your dashboard. Changes are saved automatically.
+                </p>
+
+                <div className="space-y-4">
+                  {dashboardWidgets.map((widget) => (
+                    <div key={widget.key} className="flex items-center justify-between p-4 rounded-[12px] bg-gray-50">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800 text-sm">{widget.label}</h4>
+                        <p className="text-xs text-gray-600 mt-1">{widget.description}</p>
+                      </div>
+                      <Switch
+                        checked={dashboardPrefs[widget.key]}
+                        onCheckedChange={(checked) => handleDashboardPrefChange(widget.key, checked)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Profile Settings */}
+              <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}>
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800">Profile Settings</h2>
+                </div>
+
+                {errors.submit && (
+                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-[12px]">
+                    <p className="text-sm text-red-800 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.submit}
                     </p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="email">
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="rounded-[12px] bg-gray-50"
-                    aria-describedby="email-note"
-                  />
-                  <p id="email-note" className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  </div>
+                )}
+
+                <form onSubmit={handleProfileUpdate} className="space-y-4">
                   <div>
-                    <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="country">
-                      Country
+                    <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="full-name">
+                      Full Name *
+                    </label>
+                    <Input
+                      id="full-name"
+                      value={profileData.full_name}
+                      onChange={(e) => setProfileData({ ...profileData, full_name: validateInput(e.target.value, 100) })}
+                      className={`rounded-[12px] ${errors.full_name ? 'border-red-500' : ''}`}
+                      placeholder="Your full name"
+                      maxLength={100}
+                      aria-invalid={!!errors.full_name}
+                      aria-describedby={errors.full_name ? 'name-error' : undefined}
+                      required
+                    />
+                    {errors.full_name && (
+                      <p id="name-error" className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.full_name}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="email">
+                      Email
+                    </label>
+                    <Input
+                      id="email"
+                      value={user?.email || ''}
+                      disabled
+                      className="rounded-[12px] bg-gray-50"
+                      aria-describedby="email-note"
+                    />
+                    <p id="email-note" className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="country">
+                        Country
+                      </label>
+                      <Select
+                        value={profileData.country}
+                        onValueChange={handleCountryChange}
+                      >
+                        <SelectTrigger id="country" className="rounded-[12px]">
+                          <SelectValue placeholder="Select country" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {COUNTRIES.map(country => (
+                            <SelectItem key={country.name} value={country.name}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="state">
+                        State/Province
+                      </label>
+                      <Input
+                        id="state"
+                        value={profileData.state_province}
+                        onChange={(e) => setProfileData({ ...profileData, state_province: validateInput(e.target.value, 100) })}
+                        className="rounded-[12px]"
+                        placeholder="e.g., California"
+                        maxLength={100}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="currency">
+                      Currency
                     </label>
                     <Select
-                      value={profileData.country}
-                      onValueChange={handleCountryChange}
+                      value={profileData.currency}
+                      onValueChange={(value) => setProfileData({ ...profileData, currency: value })}
                     >
-                      <SelectTrigger id="country" className="rounded-[12px]">
-                        <SelectValue placeholder="Select country" />
+                      <SelectTrigger id="currency" className="rounded-[12px]">
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="max-h-[300px]">
-                        {COUNTRIES.map(country => (
-                          <SelectItem key={country.name} value={country.name}>
-                            {country.name}
+                        {Array.from(new Set(COUNTRIES.map(c => c.currency))).sort().map(currency => (
+                          <SelectItem key={currency} value={currency}>
+                            {currency} ({CURRENCY_SYMBOLS[currency] || currency})
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Auto-selected based on your country. You can change it manually.
+                    </p>
+                  </div>
+                  
+                  <Button
+                    type="submit"
+                    className="w-full rounded-[12px] text-white"
+                    style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}
+                    disabled={updateProfileMutation.isPending}
+                  >
+                    {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </form>
+              </Card>
+            </div>
+
+            {/* Sidebar Info */}
+            <div className="space-y-6">
+              <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+                <h3 className="text-lg font-bold text-gray-800 mb-4">Account Info</h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <span className="text-gray-500">Email:</span>
+                    <div className="font-medium text-gray-800">{user.email}</div>
                   </div>
                   <div>
-                    <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="state">
-                      State/Province
-                    </label>
-                    <Input
-                      id="state"
-                      value={profileData.state_province}
-                      onChange={(e) => setProfileData({ ...profileData, state_province: validateInput(e.target.value, 100) })}
-                      className="rounded-[12px]"
-                      placeholder="e.g., California"
-                      maxLength={100}
-                    />
+                    <span className="text-gray-500">Type:</span>
+                    <div className="font-medium text-gray-800 capitalize">{user.user_type || 'Professional'}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Member since:</span>
+                    <div className="font-medium text-gray-800">
+                      {format(parseISO(user.created_date), 'MMM dd, yyyy')}
+                    </div>
                   </div>
                 </div>
-                
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block" htmlFor="currency">
-                    Currency
-                  </label>
-                  <Select
-                    value={profileData.currency}
-                    onValueChange={(value) => setProfileData({ ...profileData, currency: value })}
-                  >
-                    <SelectTrigger id="currency" className="rounded-[12px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      {Array.from(new Set(COUNTRIES.map(c => c.currency))).sort().map(currency => (
-                        <SelectItem key={currency} value={currency}>
-                          {currency} ({CURRENCY_SYMBOLS[currency] || currency})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Auto-selected based on your country. You can change it manually.
-                  </p>
-                </div>
-                
+              </Card>
+
+              <Card className="p-6 rounded-[20px]" style={{ background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%)' }}>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Need Help?</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Have questions about your subscription or billing?
+                </p>
                 <Button
-                  type="submit"
-                  className="w-full rounded-[12px] text-white"
-                  style={{ background: 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)' }}
-                  disabled={updateProfileMutation.isPending}
+                  variant="outline"
+                  className="w-full rounded-[12px]"
                 >
-                  {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  Contact Support
                 </Button>
-              </form>
-            </Card>
-          </div>
-
-          {/* Sidebar Info */}
-          <div className="space-y-6">
-            <Card className="p-6 rounded-[20px]" style={{ background: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Account Info</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <span className="text-gray-500">Email:</span>
-                  <div className="font-medium text-gray-800">{user.email}</div>
-                </div>
-                <div>
-                  <span className="text-gray-500">Type:</span>
-                  <div className="font-medium text-gray-800 capitalize">{user.user_type || 'Professional'}</div>
-                </div>
-                <div>
-                  <span className="text-gray-500">Member since:</span>
-                  <div className="font-medium text-gray-800">
-                    {format(parseISO(user.created_date), 'MMM dd, yyyy')}
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 rounded-[20px]" style={{ background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%)' }}>
-              <h3 className="text-lg font-bold text-gray-800 mb-2">Need Help?</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Have questions about your subscription or billing?
-              </p>
-              <Button
-                variant="outline"
-                className="w-full rounded-[12px]"
-              >
-                Contact Support
-              </Button>
-            </Card>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
