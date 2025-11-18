@@ -14,7 +14,7 @@ import Projects from './pages/Projects';
 import Feedback from './pages/Feedback';
 import EmailTemplates from './pages/EmailTemplates';
 import Mailbox from './pages/Mailbox';
-import Layout from './Layout.jsx';
+import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -39,5 +39,5 @@ export const PAGES = {
 export const pagesConfig = {
     mainPage: "Landing",
     Pages: PAGES,
-    Layout: Layout,
+    Layout: __Layout,
 };
