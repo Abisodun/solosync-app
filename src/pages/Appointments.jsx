@@ -10,11 +10,15 @@ export default function Appointments() {
   const [showNewForm, setShowNewForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    title: '',
-    client_name: '',
-    date: '',
-    time: '',
-    duration: 60,
+  title: '',
+  client_name: '',
+  date: '',
+  time: '',
+  duration: 60,
+  status: 'scheduled',  // ADD THIS
+  notes: ''
+});
+
     notes: ''
   });
   const { toast } = useToast();
@@ -314,6 +318,15 @@ export default function Appointments() {
                 key={appointment.id}
                 className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
               >
+                <span className={`px-2 py-1 text-xs rounded-full ${
+  appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+  appointment.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+  appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+  'bg-gray-100 text-gray-800'
+}`}>
+  {appointment.status}
+</span>
+
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
                     <Calendar className="w-6 h-6 text-purple-600" />
