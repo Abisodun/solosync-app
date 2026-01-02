@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, Sparkles, Briefcase, Palette, Store, CheckCircle2, AlertCircle } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
-import { createPageUrl } from '@/utils';
+import { supabase } from '../lib/supabase';
+import { useNavigate } from 'react-router-dom';
 
 const roles = [
   {
@@ -12,7 +12,7 @@ const roles = [
     title: 'Freelancer',
     description: 'Independent consultant or contractor',
     gradient: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
-    features: ['Client management', 'Project tracking', 'Invoice creation']
+    features: ['Client management', 'Project tracking', 'Invoice creation', 'Appointment booking']
   },
   {
     id: 'creator',
@@ -20,7 +20,7 @@ const roles = [
     title: 'Creator',
     description: 'Content creator or influencer',
     gradient: 'linear-gradient(135deg, #F472B6 0%, #EC4899 100%)',
-    features: ['Content calendar', 'Brand partnerships', 'Analytics']
+    features: ['Content calendar', 'Brand partnerships', 'Analytics', 'Community engagement']
   },
   {
     id: 'small_business',
@@ -28,7 +28,7 @@ const roles = [
     title: 'Small Business',
     description: 'Small business owner or entrepreneur',
     gradient: 'linear-gradient(135deg, #86EFAC 0%, #10B981 100%)',
-    features: ['Team tasks', 'Financial tracking', 'Growth metrics']
+    features: ['Team tasks', 'Financial tracking', 'Growth metrics', 'Client scheduling']
   }
 ];
 
@@ -54,6 +54,7 @@ const workspaceStyles = [
 ];
 
 export default function Onboarding() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [selectedRole, setSelectedRole] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState('minimal');
@@ -68,27 +69,23 @@ export default function Onboarding() {
 
   const loadUser = async () => {
     try {
-      // Check if user is authenticated
-      const isAuthenticated = await base44.auth.isAuthenticated();
+      const { data: { user }, error } = await supabase.auth.getUser();
       
-      if (!isAuthenticated) {
-        // Not authenticated, redirect to landing with a message
-        window.location.href = createPageUrl('Landing');
+      if (error || !user) {
+        navigate('/login');
         return;
       }
 
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
+      setUser(user);
       setLoading(false);
       
-      // If already onboarded, redirect to dashboard
-      if (currentUser.onboarding_completed) {
-        window.location.href = createPageUrl('Dashboard');
+      // Check if already onboarded by checking user_metadata
+      if (user.user_metadata?.onboarding_completed) {
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error('Error loading user:', error);
-      // If there's an auth error, redirect to landing
-      window.location.href = createPageUrl('Landing');
+      navigate('/login');
     }
   };
 
@@ -99,7 +96,6 @@ export default function Onboarding() {
       setError('Please select a role first');
       return;
     }
-
     if (!user) {
       setError('User data not loaded. Please refresh the page.');
       return;
@@ -109,14 +105,36 @@ export default function Onboarding() {
     setError(null);
     
     try {
-      await base44.auth.updateMe({
-        user_type: selectedRole,
-        workspace_style: selectedStyle,
-        onboarding_completed: true
+      // Update user metadata in Supabase
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: {
+          user_type: selectedRole,
+          workspace_style: selectedStyle,
+          onboarding_completed: true
+        }
       });
 
+      if (updateError) throw updateError;
+
+      // Create user profile in profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          user_type: selectedRole,
+          workspace_style: selectedStyle,
+          onboarding_completed: true,
+          updated_at: new Date().toISOString()
+        });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        // Don't throw - profile creation is secondary
+      }
+
       // Redirect to dashboard
-      window.location.href = createPageUrl('Dashboard');
+      navigate('/dashboard');
     } catch (error) {
       console.error('Error completing onboarding:', error);
       setError(error.message || 'Failed to complete setup. Please try again.');
@@ -124,7 +142,6 @@ export default function Onboarding() {
     }
   };
 
-  // Show loading state while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#FAF5FF] via-[#F0FDF4] to-[#EFF6FF] flex items-center justify-center">
@@ -178,6 +195,7 @@ export default function Onboarding() {
               {roles.map((role) => {
                 const Icon = role.icon;
                 const isSelected = selectedRole === role.id;
+
                 return (
                   <motion.button
                     key={role.id}
@@ -193,7 +211,6 @@ export default function Onboarding() {
                         ? '0 20px 60px rgba(167, 139, 250, 0.3)'
                         : '0 8px 32px rgba(167, 139, 250, 0.15)'
                     }}
-                    aria-label={`Select ${role.title} role`}
                   >
                     <div
                       className="w-14 h-14 rounded-[16px] flex items-center justify-center mb-4"
@@ -241,6 +258,7 @@ export default function Onboarding() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {workspaceStyles.map((style) => {
                 const isSelected = selectedStyle === style.id;
+
                 return (
                   <motion.button
                     key={style.id}
@@ -256,7 +274,6 @@ export default function Onboarding() {
                         ? '0 20px 60px rgba(167, 139, 250, 0.3)'
                         : '0 8px 32px rgba(167, 139, 250, 0.15)'
                     }}
-                    aria-label={`Select ${style.name} workspace style`}
                   >
                     <div
                       className="h-48"
@@ -330,7 +347,6 @@ export default function Onboarding() {
             onClick={() => setStep(step - 1)}
             disabled={step === 1 || savingSetup}
             className="rounded-[16px] px-8"
-            aria-label="Go back to previous step"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back
@@ -345,7 +361,7 @@ export default function Onboarding() {
                   return;
                 }
                 setError(null);
-                setStep(step + 1);
+                setStep(step + 2);
               } else {
                 handleComplete();
               }
@@ -353,10 +369,9 @@ export default function Onboarding() {
             disabled={savingSetup}
             className="rounded-[16px] px-8 text-white"
             style={{
-              background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
+              background: 'linear-gradient(135deg,#A78BFA 0%, #8B5CF6 100%)',
               boxShadow: '0 8px 24px rgba(139, 92, 246, 0.3)'
             }}
-            aria-label={step === 2 ? 'Complete setup and go to dashboard' : 'Continue to next step'}
           >
             {savingSetup ? 'Setting up...' : step === 2 ? 'Complete Setup' : 'Continue'}
             {!savingSetup && <ArrowRight className="w-5 h-5 ml-2" />}
@@ -366,3 +381,4 @@ export default function Onboarding() {
     </div>
   );
 }
+
