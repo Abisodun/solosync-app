@@ -113,7 +113,8 @@ export default function Appointments() {
       date: appointment.date,
       time: appointment.time,
       duration: appointment.duration,
-      notes: appointment.notes || ''
+      notes: appointment.notes || '',
+    status: appointment.status || 'scheduled'
     });
     setEditingId(appointment.id);
     setShowNewForm(true);
@@ -126,7 +127,8 @@ export default function Appointments() {
       date: '',
       time: '',
       duration: 60,
-      notes: ''
+      notes: '',
+    status: 'scheduled'
     });
     setEditingId(null);
     setShowNewForm(false);
@@ -271,6 +273,22 @@ export default function Appointments() {
                   placeholder="60"
                 />
               </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            <select
+              required
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="scheduled">Scheduled</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
