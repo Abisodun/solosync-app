@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Plus, X, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Users, Plus, X, Edit, Trash2 }, List, LayoutGrid, CheckCircle, XCircle from 'lucide-react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from '@/lib/supabase';
@@ -9,6 +9,7 @@ export default function Appointments() {
   const [appointments, setAppointments] = useState([]);
   const [showNewForm, setShowNewForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
   const [formData, setFormData] = useState({
   title: '',
   client_name: '',
@@ -149,7 +150,29 @@ export default function Appointments() {
           <h1 className="text-3xl font-bold text-gray-900">Appointments</h1>
           <p className="text-gray-500 mt-1">Manage your bookings and availability</p>
         </div>
-        <Button 
+        <B<div className="flex items-center gap-2">
+        {/* View Toggle Buttons */}
+        <div className="flex bg-gray-100 rounded-lg p-1">
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+            className="flex items-center gap-1"
+          >
+            <List className="w-4 h-4" />
+            List
+          </Button>
+          <Button
+            variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('calendar')}
+            className="flex items-center gap-1"
+          >
+            <LayoutGrid className="w-4 h-4" />
+            Calendar
+          </Button>
+        </div>
+        <utton 
           onClick={() => setShowNewForm(!showNewForm)}
           className="flex items-center gap-2"
         >
@@ -315,6 +338,7 @@ export default function Appointments() {
       )}
 
       {/* Appointments List */}
+      {viewMode === 'list' ? (
       <Card className="p-6">
         <h2 className="text-xl font-bold mb-4">Upcoming Appointments</h2>
         {upcomingAppointments.length === 0 ? (
@@ -336,13 +360,15 @@ export default function Appointments() {
                 key={appointment.id}
                 className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
               >
-                <span className={`px-2 py-1 text-xs rounded-full ${
+                <span className={`flex items-center gap-1 px-2 py-1 text-xs rounded-full ${
   appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
   appointment.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
   appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
   'bg-gray-100 text-gray-800'
 }`}>
-  {appointment.status}
+  {appointment.status === 'completed' && <CheckCircle className="w-3 h-3" />}
+                  {appointment.status === 'cancelled' && <XCircle className="w-3 h-3" />}
+                  {appointment.status}
 </span>
 
                 <div className="flex items-center gap-4">
@@ -385,6 +411,69 @@ export default function Appointments() {
           </div>
         )}
       </Card>
+      ) : (
+        {/* Calendar View */}
+        <Card className="p-6">
+          <h2 className="text-xl font-bold mb-4">Calendar View</h2>
+          {upcomingAppointments.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">No upcoming appointments</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(
+                upcomingAppointments.reduce((acc, apt) => {
+                  const date = new Date(apt.date).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  });
+                  if (!acc[date]) acc[date] = [];
+                  acc[date].push(apt);
+                  return acc;
+                }, {})
+              ).map(([date, appointments]) => (
+                <div key={date} className="border rounded-lg p-4">
+                  <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-purple-600" />
+                    {date}
+                  </h3>
+                  <div className="space-y-2">
+                    {appointments.map((appointment) => (
+                      <div key={appointment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Clock className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="font-medium text-gray-900">{appointment.time} - {appointment.title}</p>
+                            <p className="text-sm text-gray-600">{appointment.client_name}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`flex items-center gap-1 px-2 py-1 text-xs rounded-full ${
+                            appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            appointment.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                            appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {appointment.status === 'completed' && <CheckCircle className="w-3 h-3" />}
+                            {appointment.status === 'cancelled' && <XCircle className="w-3 h-3" />}
+                            {appointment.status}
+                          </span>
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(appointment)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
     </div>
   );
 }
