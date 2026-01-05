@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Plus, X, Edit, Trash2 }, List, LayoutGrid, CheckCircle, XCircle from 'lucide-react';
-import { Card } from "@/components/ui/card";
+import { Calendar, Clock, Users, Plus, X, Edit, Trash2, List, LayoutGrid, CheckCircle, XCircle } from 'lucide-react';import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
